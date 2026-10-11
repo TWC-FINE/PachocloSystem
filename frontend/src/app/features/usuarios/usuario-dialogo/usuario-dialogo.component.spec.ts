@@ -123,6 +123,19 @@ describe('UsuarioDialogoComponent', () => {
     ]);
   });
 
+  it('la contraseña se describe con la nota de requisitos vía aria-describedby', async () => {
+    const { elemento } = await renderizar();
+
+    const contrasena = elemento.querySelector('[formControlName="password"]');
+    const nota = elemento.querySelector<HTMLElement>('#nota-contrasena');
+
+    expect(nota?.textContent?.trim()).toBe(
+      'Al menos 10 caracteres y distinta del usuario. La cambiará al entrar.',
+    );
+    expect(nota?.id).toBe('nota-contrasena');
+    expect(contrasena?.getAttribute('aria-describedby')).toContain('nota-contrasena');
+  });
+
   it('la contraseña no puede ser el username', async () => {
     const { rellenar, enviar, errores } = await renderizar();
 

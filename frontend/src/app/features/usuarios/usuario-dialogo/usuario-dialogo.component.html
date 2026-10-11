@@ -26,9 +26,9 @@
           type="password"
           formControlName="password"
           autocomplete="new-password"
+          aria-describedby="nota-contrasena"
           required
         />
-        <mat-hint>Al menos 10 caracteres y distinta del usuario. La cambiará al entrar.</mat-hint>
         <mat-error>{{ primerError(formulario.controls.password) }}</mat-error>
       </mat-form-field>
       <mat-form-field subscriptSizing="dynamic">
@@ -43,6 +43,10 @@
         <mat-error>{{ primerError(formulario.controls.repeticion) }}</mat-error>
       </mat-form-field>
     </div>
+
+    <p id="nota-contrasena" class="nota">
+      Al menos 10 caracteres y distinta del usuario. La cambiará al entrar.
+    </p>
 
     <fieldset class="grupo">
       <legend id="etiqueta-rol-usuario">Rol</legend>
