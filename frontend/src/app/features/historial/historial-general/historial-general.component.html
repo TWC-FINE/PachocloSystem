@@ -9,11 +9,11 @@
 <div class="filtros">
   <mat-form-field subscriptSizing="dynamic">
     <mat-label>Buscar en</mat-label>
-    <select matNativeControl [formControl]="filtro">
+    <mat-select [formControl]="filtro">
       @for (opcion of filtros; track opcion.valor) {
-        <option [value]="opcion.valor">{{ opcion.etiqueta }}</option>
+        <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
       }
-    </select>
+    </mat-select>
   </mat-form-field>
   <mat-form-field class="lista-busqueda" subscriptSizing="dynamic">
     <mat-label>Nombre o ID</mat-label>
