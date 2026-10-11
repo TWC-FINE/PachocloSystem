@@ -57,6 +57,15 @@ describe('CambiarPasswordComponent', () => {
     usuario.set(eva);
   });
 
+  it('muestra el logotipo de marca con su texto alternativo', async () => {
+    const { elemento } = await renderizar();
+
+    const logo = elemento.querySelector<HTMLImageElement>('img.marca-logo');
+    expect(logo).not.toBeNull();
+    expect(logo!.getAttribute('alt')).toBe('PachocloSystem');
+    expect(logo!.getAttribute('src')).toContain('logos/logo-sistema-160.png');
+  });
+
   it('si el cambio es obligatorio lo avisa y solo deja cerrar sesión', async () => {
     const { elemento } = await renderizar();
 

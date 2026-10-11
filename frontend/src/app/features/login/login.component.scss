@@ -11,6 +11,27 @@
   max-width: 400px;
 }
 
+// Bloque de marca: el logotipo es el elemento principal de la tarjeta.
+.marca {
+  padding: 16px 16px 0;
+}
+
+.marca-logo {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+}
+
+.encabezado {
+  justify-content: center;
+  text-align: center;
+
+  mat-card-subtitle {
+    margin-top: 4px;
+  }
+}
+
 form {
   display: flex;
   flex-direction: column;
@@ -23,7 +44,8 @@ app-errores-formulario {
   margin-top: 16px;
 }
 
-.aviso {
+.aviso,
+.espera {
   margin-top: 16px;
   padding: 8px 16px;
   border-radius: 8px;

@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { CABECERA_IDEMPOTENCIA } from '../../shared/idempotencia';
 import { FiltroHistorial, Registro, RegistroRequest } from './historial.models';
 
 /** Cabecera con la que el backend reconoce la repetición de un mismo alta. */
-export const CABECERA_IDEMPOTENCIA = 'Idempotency-Key';
+export { CABECERA_IDEMPOTENCIA };
 
 /** Acceso al historial clínico. Los errores llegan como `ApiError` (errorInterceptor). */
 /**

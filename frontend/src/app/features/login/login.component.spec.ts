@@ -35,7 +35,7 @@ describe('LoginComponent', () => {
       elemento.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
       await fixture.whenStable();
     };
-    return { elemento, router, escribir, enviar };
+    return { elemento, fixture, router, escribir, enviar };
   }
 
   beforeEach(() => auth.iniciarSesion.mockReset());
@@ -104,6 +104,104 @@ describe('LoginComponent', () => {
     const { elemento } = await renderizar({ motivo: 'inventado' });
 
     expect(elemento.querySelector('[role="status"]')).toBeNull();
+  });
+
+  describe('cuenta atrás del 429', () => {
+    // Solo el reloj de la cuenta atrás: el de Angular (que resuelve `whenStable`)
+    // debe seguir siendo real, o las esperas del test no terminarían nunca.
+    beforeEach(() => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] }));
+    afterEach(() => vi.useRealTimers());
+
+    /** Envía el formulario con un login que falla y devuelve el DOM ya pintado. */
+    async function enviarCon(error: ApiError) {
+      auth.iniciarSesion.mockReturnValue(throwError(() => error));
+      const { elemento, fixture, escribir, enviar } = await renderizar();
+      escribir('username', 'admin');
+      escribir('password', 'secreta');
+      await enviar();
+      return { elemento, fixture };
+    }
+
+    const boton = (elemento: HTMLElement) =>
+      elemento.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+
+    it('muestra la espera del Retry-After y bloquea el botón', async () => {
+      const { elemento } = await enviarCon(new ApiError(429, ['Demasiados intentos.'], 45));
+
+      expect(elemento.querySelector('[role="alert"]')?.textContent).toContain(
+        'Demasiados intentos.',
+      );
+      expect(elemento.querySelector('.espera')?.textContent).toContain('Podrá reintentar en 0:45');
+      expect(boton(elemento).disabled).toBe(true);
+      expect(elemento.querySelector('[role="status"]')?.textContent).toContain(
+        'Podrá reintentar en 0:45.',
+      );
+    });
+
+    it('actualiza el texto visible sin repetir el anuncio cada segundo', async () => {
+      const { elemento, fixture } = await enviarCon(
+        new ApiError(429, ['Demasiados intentos.'], 45),
+      );
+      const anuncio = elemento.querySelector('[role="status"]')?.textContent;
+
+      vi.advanceTimersByTime(5000);
+      await fixture.whenStable();
+
+      expect(elemento.querySelector('.espera')?.textContent).toContain('Podrá reintentar en 0:40');
+      expect(elemento.querySelector('[role="status"]')?.textContent).toBe(anuncio);
+    });
+
+    it('reactiva el botón y anuncia el final al llegar a 0', async () => {
+      const { elemento, fixture } = await enviarCon(
+        new ApiError(429, ['Demasiados intentos.'], 45),
+      );
+
+      vi.advanceTimersByTime(45_000);
+      await fixture.whenStable();
+
+      expect(elemento.querySelector('.espera')).toBeNull();
+      expect(boton(elemento).disabled).toBe(false);
+      expect(elemento.querySelector('[role="status"]')?.textContent).toContain(
+        'Ya puede reintentar.',
+      );
+    });
+
+    it('sin Retry-After mantiene el comportamiento actual', async () => {
+      const { elemento } = await enviarCon(new ApiError(429, ['Demasiados intentos.']));
+
+      expect(elemento.querySelector('.espera')).toBeNull();
+      expect(boton(elemento).disabled).toBe(false);
+      expect(elemento.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it.each([
+      ['cero', 0],
+      ['negativo', -5],
+      ['no numérico', Number('pronto')],
+      ['ausente', undefined],
+    ])('trata un Retry-After %s como ausente', async (_caso, valor) => {
+      const { elemento } = await enviarCon(new ApiError(429, ['Demasiados intentos.'], valor));
+
+      expect(elemento.querySelector('.espera')).toBeNull();
+      expect(boton(elemento).disabled).toBe(false);
+    });
+
+    it('limpia el temporizador al destruir el componente', async () => {
+      auth.iniciarSesion.mockReturnValue(
+        throwError(() => new ApiError(429, ['Demasiados intentos.'], 45)),
+      );
+      const { fixture, escribir, enviar } = await renderizar();
+      const temporizadoresIniciales = vi.getTimerCount();
+
+      escribir('username', 'admin');
+      escribir('password', 'secreta');
+      await enviar();
+      expect(vi.getTimerCount()).toBeGreaterThan(temporizadoresIniciales);
+
+      fixture.destroy();
+
+      expect(vi.getTimerCount()).toBe(temporizadoresIniciales);
+    });
   });
 });
 
