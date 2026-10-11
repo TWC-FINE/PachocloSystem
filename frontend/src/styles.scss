@@ -17,6 +17,11 @@ html {
       density: 0,
     )
   );
+
+  // Acento de marca: cian dominante del logotipo, medido sobre la imagen
+  // original (RGB 16,192,208). No se pinta debajo de texto, así que no
+  // altera el contraste AA que ya garantiza la paleta de Material.
+  --marca-acento: #10c0d0;
 }
 
 body {
