@@ -26,6 +26,10 @@
 .encabezado {
   justify-content: center;
   text-align: center;
+
+  mat-card-subtitle {
+    margin-top: 4px;
+  }
 }
 
 form {
