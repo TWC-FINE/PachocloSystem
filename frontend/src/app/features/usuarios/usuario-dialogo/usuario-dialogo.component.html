@@ -4,7 +4,7 @@
   <mat-dialog-content>
     <app-errores-formulario [mensajes]="errores()" />
 
-    <mat-form-field class="campo-completo">
+    <mat-form-field class="campo-completo" subscriptSizing="dynamic">
       <mat-label>Usuario</mat-label>
       <input
         matInput
@@ -19,7 +19,7 @@
     </mat-form-field>
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Contraseña</mat-label>
         <input
           matInput
@@ -31,7 +31,7 @@
         <mat-hint>Al menos 10 caracteres y distinta del usuario. La cambiará al entrar.</mat-hint>
         <mat-error>{{ primerError(formulario.controls.password) }}</mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Repita la contraseña</mat-label>
         <input
           matInput
@@ -58,7 +58,7 @@
 
     @if (rol() === 'DOCTOR' || rol() === 'ENFERMERO') {
       <app-errores-formulario [mensajes]="erroresCarga()" />
-      <mat-form-field class="campo-completo">
+      <mat-form-field class="campo-completo" subscriptSizing="dynamic">
         <mat-label>Trabajador</mat-label>
         <select matNativeControl formControlName="idTrabajador" required>
           <option value="" disabled>
