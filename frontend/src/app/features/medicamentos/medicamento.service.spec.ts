@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { CABECERA_IDEMPOTENCIA } from '../../shared/idempotencia';
 import { DatosMedicamento } from './medicamento.models';
 import { MedicamentoService } from './medicamento.service';
 
@@ -78,6 +79,30 @@ describe('MedicamentoService', () => {
     const peticion = http.expectOne(url);
     expect(peticion.request.method).toBe('POST');
     expect(peticion.request.body).toEqual({ cantidad: 5 });
+    peticion.flush({});
+  });
+
+  it('las salidas con clave llevan la cabecera de idempotencia', () => {
+    servicio.moverStock('MED-0001', 'salida', 5, 'clave-de-prueba').subscribe();
+
+    const peticion = http.expectOne('/api/medicamentos/MED-0001/salidas');
+    expect(peticion.request.headers.get(CABECERA_IDEMPOTENCIA)).toBe('clave-de-prueba');
+    peticion.flush({});
+  });
+
+  it('sin clave, la salida no lleva la cabecera', () => {
+    servicio.moverStock('MED-0001', 'salida', 5).subscribe();
+
+    const peticion = http.expectOne('/api/medicamentos/MED-0001/salidas');
+    expect(peticion.request.headers.has(CABECERA_IDEMPOTENCIA)).toBe(false);
+    peticion.flush({});
+  });
+
+  it('nunca envía la cabecera en /entradas, que no la acepta', () => {
+    servicio.moverStock('MED-0001', 'entrada', 5, 'clave-de-prueba').subscribe();
+
+    const peticion = http.expectOne('/api/medicamentos/MED-0001/entradas');
+    expect(peticion.request.headers.has(CABECERA_IDEMPOTENCIA)).toBe(false);
     peticion.flush({});
   });
 });

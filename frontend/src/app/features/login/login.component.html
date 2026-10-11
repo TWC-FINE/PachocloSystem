@@ -22,6 +22,14 @@
           <p>{{ avisoCierre }}</p>
         </div>
       }
+      @if (esperaSegundos() !== null) {
+        <div class="espera">
+          <p>Podrá reintentar en {{ esperaTexto() }}</p>
+        </div>
+      }
+      @if (avisoEspera(); as aviso) {
+        <p class="solo-lectores" role="status">{{ aviso }}</p>
+      }
 
       <form [formGroup]="formulario" (ngSubmit)="iniciarSesion()" novalidate>
         <mat-form-field>
@@ -52,7 +60,12 @@
           <mat-error>{{ primerError(formulario.controls.password) }}</mat-error>
         </mat-form-field>
 
-        <button mat-flat-button type="submit" class="enviar" [disabled]="enviando()">
+        <button
+          mat-flat-button
+          type="submit"
+          class="enviar"
+          [disabled]="enviando() || esperaSegundos() !== null"
+        >
           @if (enviando()) {
             <mat-spinner diameter="20" aria-label="Iniciando sesión" />
           } @else {

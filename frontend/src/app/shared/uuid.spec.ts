@@ -18,6 +18,15 @@ describe('generarUuid', () => {
     expect(generarUuid()).toMatch(UUID_V4);
   });
 
+  it('las claves del generador por defecto cumplen el formato que exige el backend', () => {
+    const claves = Array.from({ length: 200 }, () => generarUuid());
+
+    for (const clave of claves) {
+      expect(clave).toMatch(FORMATO_BACKEND);
+    }
+    expect(new Set(claves).size).toBe(claves.length);
+  });
+
   describe('sin randomUUID (contexto HTTP no seguro)', () => {
     const getRandomValues = vi.fn(crypto.getRandomValues.bind(crypto));
     const sinRandomUUID: FuenteAleatoria = {

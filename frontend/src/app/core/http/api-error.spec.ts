@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { ApiError, mensajesDeError } from './api-error';
 
 describe('ApiError.desde', () => {
@@ -12,6 +12,73 @@ describe('ApiError.desde', () => {
 
     expect(error.status).toBe(400);
     expect(error.mensajes).toEqual(['A.', 'B.']);
+  });
+
+  it('conserva los segundos del Retry-After de un 429', () => {
+    const error = ApiError.desde(
+      new HttpErrorResponse({
+        status: 429,
+        headers: new HttpHeaders({ 'Retry-After': '45' }),
+        error: {
+          status: 429,
+          error: 'Too Many Requests',
+          mensajes: ['Demasiados intentos.'],
+        },
+      }),
+    );
+
+    expect(error.status).toBe(429);
+    expect(error.mensajes).toEqual(['Demasiados intentos.']);
+    expect(error.retryAfterSegundos).toBe(45);
+  });
+
+  it.each([
+    ['entero con espacios', ' 120 ', 120],
+    ['por encima del tope', '7200', 3600],
+    ['el tope exacto', '3600', 3600],
+  ])('acepta el Retry-After %s', (_caso, cabecera, esperado) => {
+    const error = ApiError.desde(
+      new HttpErrorResponse({
+        status: 429,
+        headers: new HttpHeaders({ 'Retry-After': cabecera }),
+      }),
+    );
+
+    expect(error.retryAfterSegundos).toBe(esperado);
+  });
+
+  it.each([
+    ['sin cabecera', null],
+    ['cero', '0'],
+    ['negativo', '-5'],
+    ['texto', 'pronto'],
+    ['número con basura', '5abc'],
+    ['fecha HTTP', 'Wed, 21 Oct 2026 07:28:00 GMT'],
+    ['vacío', '   '],
+  ])('ignora el Retry-After %s', (_caso, cabecera) => {
+    const error = ApiError.desde(
+      new HttpErrorResponse({
+        status: 429,
+        headers: cabecera === null ? undefined : new HttpHeaders({ 'Retry-After': cabecera }),
+      }),
+    );
+
+    expect(error.retryAfterSegundos).toBeUndefined();
+  });
+
+  it('también lo conserva si el cuerpo no es el ErrorResponse uniforme', () => {
+    const error = ApiError.desde(
+      new HttpErrorResponse({
+        status: 503,
+        headers: new HttpHeaders({ 'Retry-After': '30' }),
+        error: null,
+      }),
+    );
+
+    expect(error.mensajes).toEqual([
+      'No se pudo conectar con el servidor. Compruebe su conexión y vuelva a intentarlo.',
+    ]);
+    expect(error.retryAfterSegundos).toBe(30);
   });
 
   it.each([502, 503])('conserva los mensajes del backend también en un %i', (status) => {
