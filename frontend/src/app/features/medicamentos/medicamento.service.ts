@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { CABECERA_IDEMPOTENCIA } from '../../shared/idempotencia';
 import {
   DatosMedicamento,
   Medicamento,
@@ -53,9 +54,30 @@ export class MedicamentoService {
     return this.http.delete<void>(`${URL}/${encodeURIComponent(id)}`);
   }
 
-  /** Suma (`entrada`) o resta (`salida`) unidades; una salida falla si no alcanza o está vencido. */
-  moverStock(id: string, tipo: TipoMovimiento, cantidad: number): Observable<Medicamento> {
+  /**
+   * Suma (`entrada`) o resta (`salida`) unidades; una salida falla si no alcanza
+   * o está vencido.
+   *
+   * `claveIdempotencia` se envía **solo en las salidas**, el único movimiento que
+   * el backend sabe repetir sin descuadrar el stock (`/entradas` no acepta la
+   * cabecera): repetir la petición con la misma clave y la misma cantidad
+   * devuelve la respuesta de la primera vez sin volver a descontar.
+   */
+  moverStock(
+    id: string,
+    tipo: TipoMovimiento,
+    cantidad: number,
+    claveIdempotencia?: string,
+  ): Observable<Medicamento> {
     const ruta = tipo === 'entrada' ? 'entradas' : 'salidas';
-    return this.http.post<Medicamento>(`${URL}/${encodeURIComponent(id)}/${ruta}`, { cantidad });
+    const cabecera =
+      ruta === 'salidas' && claveIdempotencia
+        ? { headers: { [CABECERA_IDEMPOTENCIA]: claveIdempotencia } }
+        : {};
+    return this.http.post<Medicamento>(
+      `${URL}/${encodeURIComponent(id)}/${ruta}`,
+      { cantidad },
+      cabecera,
+    );
   }
 }

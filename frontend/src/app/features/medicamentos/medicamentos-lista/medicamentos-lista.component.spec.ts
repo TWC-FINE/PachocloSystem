@@ -5,6 +5,7 @@ import { Permiso, PermisosService, tienePermiso } from '../../../core/permisos';
 import { Rol } from '../../../core/roles';
 import { ApiError } from '../../../core/http/api-error';
 import { NotificacionService } from '../../../core/notificacion.service';
+import { SIN_CONFIRMAR } from '../../../shared/idempotencia';
 import { ESPERA_BUSQUEDA_MS } from '../../../shared/listas';
 import { Medicamento } from '../medicamento.models';
 import { MedicamentoService } from '../medicamento.service';
@@ -255,6 +256,18 @@ describe('MedicamentosListaComponent', () => {
     expect(notificaciones.exito).toHaveBeenCalledWith(
       'Salida registrada: Amoxil 250 mg/5 ml queda con 30 unidades.',
     );
+    expect(servicio.listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('si la salida queda sin confirmar no avisa de éxito, pero recarga por si se aplicó', async () => {
+    alCerrarDialogo(SIN_CONFIRMAR);
+    const { boton, estable } = await renderizar();
+
+    boton('Salida de stock de Amoxil 250 mg/5 ml').click();
+    await estable();
+
+    expect(notificaciones.exito).not.toHaveBeenCalled();
+    expect(notificaciones.error).not.toHaveBeenCalled();
     expect(servicio.listar).toHaveBeenCalledTimes(2);
   });
 

@@ -25,12 +25,17 @@ import { NotificacionService } from '../../../core/notificacion.service';
 import { PermisosService } from '../../../core/permisos';
 import { confirmar } from '../../../shared/confirmacion-dialogo/confirmacion-dialogo.component';
 import { formatearFecha } from '../../../shared/fechas';
+import { SIN_CONFIRMAR } from '../../../shared/idempotencia';
 import { ESPERA_BUSQUEDA_MS, crearListaRemota, textoBuscado } from '../../../shared/listas';
 import { enteroEntre, obligatorio, primerError } from '../../../shared/validadores';
 import { MedicamentoDialogoComponent } from '../medicamento-dialogo/medicamento-dialogo.component';
 import { ETIQUETAS_PRESENTACION, Medicamento, TipoMovimiento } from '../medicamento.models';
 import { MedicamentoService } from '../medicamento.service';
-import { MovimientoDialogoComponent } from '../movimiento-dialogo/movimiento-dialogo.component';
+import {
+  DatosMovimientoDialogo,
+  MovimientoDialogoComponent,
+  ResultadoMovimientoDialogo,
+} from '../movimiento-dialogo/movimiento-dialogo.component';
 
 type Vista = 'todos' | 'stock-bajo' | 'por-vencer' | 'vencidos';
 
@@ -184,14 +189,23 @@ export class MedicamentosListaComponent {
   }
 
   protected moverStock(medicamento: Medicamento, tipo: TipoMovimiento): void {
-    this.abrirDialogo(
-      MovimientoDialogoComponent,
-      { medicamento, tipo },
-      '440px',
-      (m) =>
-        `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada: ${this.descripcion(m)} ` +
-        `queda con ${m.cantidadStock} unidades.`,
-    );
+    this.dialogo
+      .open<MovimientoDialogoComponent, DatosMovimientoDialogo, ResultadoMovimientoDialogo>(
+        MovimientoDialogoComponent,
+        { data: { medicamento, tipo }, width: '440px', maxWidth: '95vw' },
+      )
+      .afterClosed()
+      .pipe(filter((resultado) => resultado !== undefined))
+      .subscribe((resultado) => {
+        // Sin confirmar, el diálogo ya avisó; se recarga para ver el stock real.
+        if (resultado !== SIN_CONFIRMAR) {
+          this.notificaciones.exito(
+            `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada: ${this.descripcion(resultado)} ` +
+              `queda con ${resultado.cantidadStock} unidades.`,
+          );
+        }
+        this.recargar();
+      });
   }
 
   protected eliminar(medicamento: Medicamento): void {
