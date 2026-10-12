@@ -48,7 +48,9 @@ describe('MedicamentoDialogoComponent', () => {
     const establecer = () => fixture.whenStable();
     return {
       elemento,
+      fixture,
       campo,
+      establecer,
       rellenar: async (valores: Record<string, string>) => {
         for (const [nombre, valor] of Object.entries(valores)) {
           const control = campo(nombre)!;
@@ -85,7 +87,7 @@ describe('MedicamentoDialogoComponent', () => {
     lote: 'L-1',
     cantidadStock: '120',
     stockMinimo: '10',
-    fechaVencimiento: '2027-01-31',
+    fechaVencimiento: '31/01/2027',
     ubicacion: 'Estante A',
   };
 
@@ -124,7 +126,7 @@ describe('MedicamentoDialogoComponent', () => {
     ]);
   });
 
-  it('registra con el stock inicial, los textos recortados y la fecha tal cual', async () => {
+  it('registra con el stock inicial, los textos recortados y la fecha en ISO', async () => {
     servicio.registrar.mockReturnValue(of(dolex));
     const { rellenar, enviar } = await renderizar({});
 
@@ -146,6 +148,36 @@ describe('MedicamentoDialogoComponent', () => {
     expect(dialogo.close).toHaveBeenCalledWith(dolex);
   });
 
+  it('envía 2027-01-31 al elegir el 31/01/2027 en el calendario', async () => {
+    servicio.registrar.mockReturnValue(of(dolex));
+    const { elemento, rellenar, enviar, establecer } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '31/12/2026' });
+
+    // Abre en diciembre de 2026 (el valor actual) y avanza a enero de 2027.
+    elemento.querySelector<HTMLButtonElement>('mat-datepicker-toggle button')!.click();
+    await establecer();
+    document
+      .querySelector<HTMLButtonElement>('.cdk-overlay-container .mat-calendar-next-button')!
+      .click();
+    await establecer();
+
+    const dia31 = Array.from(
+      document.querySelectorAll<HTMLElement>('.cdk-overlay-container .mat-calendar-body-cell'),
+    ).find((celda) => celda.textContent?.trim() === '31')!;
+    dia31.click();
+    await establecer();
+
+    expect(
+      elemento.querySelector<HTMLInputElement>('[formControlName="fechaVencimiento"]')!.value,
+    ).toBe('31/01/2027');
+
+    await enviar();
+    expect(servicio.registrar).toHaveBeenCalledWith(
+      expect.objectContaining({ fechaVencimiento: '2027-01-31' }),
+    );
+  });
+
   it('al editar no deja tocar el stock y no lo envía', async () => {
     servicio.editar.mockReturnValue(of(dolex));
     const { elemento, campo, rellenar, enviar } = await renderizar({ medicamento: dolex });
@@ -156,9 +188,9 @@ describe('MedicamentoDialogoComponent', () => {
     )!;
     expect(stockActual.disabled).toBe(true);
     expect(campo('presentacion')?.textContent).toContain('Tableta');
-    expect((campo('fechaVencimiento') as HTMLInputElement)!.value).toBe('2027-01-31');
+    expect((campo('fechaVencimiento') as HTMLInputElement)!.value).toBe('31/01/2027');
 
-    await rellenar({ fechaVencimiento: '2026-12-31' });
+    await rellenar({ fechaVencimiento: '31/12/2026' });
     await enviar();
 
     const [id, datos] = servicio.editar.mock.calls[0] as unknown as [string, object];

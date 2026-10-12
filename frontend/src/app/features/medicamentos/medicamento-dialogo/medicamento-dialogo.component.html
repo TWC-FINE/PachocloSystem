@@ -96,7 +96,9 @@
     <div class="fila-campos">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Fecha de vencimiento</mat-label>
-        <input matInput type="date" formControlName="fechaVencimiento" required />
+        <input matInput [matDatepicker]="vencimiento" formControlName="fechaVencimiento" required />
+        <mat-datepicker-toggle matIconSuffix [for]="vencimiento" />
+        <mat-datepicker #vencimiento />
         <mat-error>{{ primerError(formulario.controls.fechaVencimiento) }}</mat-error>
       </mat-form-field>
       <mat-form-field subscriptSizing="dynamic">
