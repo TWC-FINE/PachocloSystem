@@ -4,3 +4,10 @@
 mat-form-field {
   margin-bottom: 8px;
 }
+
+// Cada caja de entrada conserva su altura natural (56 px): el error de un campo de la fila
+// (Edad / Habitación) no debe estirar la caja del otro (align-items por defecto en
+// .fila-campos es stretch). Mismo patrón que medicamento-dialogo.
+.fila-campos {
+  align-items: flex-start;
+}
