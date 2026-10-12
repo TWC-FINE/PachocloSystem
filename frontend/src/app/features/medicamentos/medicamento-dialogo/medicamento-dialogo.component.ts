@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { mensajesDeError } from '../../../core/http/api-error';
 import { ErroresFormularioComponent } from '../../../shared/errores-formulario/errores-formulario.component';
+import { PROVEEDORES_FECHA_ISO } from '../../../shared/fecha-adapter';
 import {
   enteroEntre,
   longitudMaxima,
@@ -48,9 +50,13 @@ function texto(obligatorioMensaje: string, maximo: number, maximoMensaje: string
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
+    MatDatepickerModule,
     ErroresFormularioComponent,
   ],
+  // Fechas del calendario como texto ISO en español (ver shared/fecha-adapter.ts).
+  providers: [PROVEEDORES_FECHA_ISO],
   templateUrl: './medicamento-dialogo.component.html',
+  styleUrl: './medicamento-dialogo.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicamentoDialogoComponent {
@@ -104,7 +110,7 @@ export class MedicamentoDialogoComponent {
       obligatorio('El stock mínimo es obligatorio.'),
       enteroEntre(0, 1_000_000, 'El stock mínimo debe estar entre 0 y 1000000.'),
     ]),
-    /** Texto "AAAA-MM-DD" del `<input type="date">`; nunca pasa por `Date`. */
+    /** Texto "AAAA-MM-DD" del `mat-datepicker` (adaptador de texto); nunca pasa por `Date`. */
     fechaVencimiento: [
       this.medicamento?.fechaVencimiento ?? '',
       obligatorio('La fecha de vencimiento es obligatoria.'),

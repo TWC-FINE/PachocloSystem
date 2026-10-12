@@ -7,12 +7,12 @@
     <app-errores-formulario [mensajes]="errores()" />
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Nombre comercial</mat-label>
         <input matInput formControlName="nombre" maxlength="80" required cdkFocusInitial />
         <mat-error>{{ primerError(formulario.controls.nombre) }}</mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Principio activo</mat-label>
         <input matInput formControlName="principioActivo" maxlength="80" required />
         <mat-error>{{ primerError(formulario.controls.principioActivo) }}</mat-error>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Presentación</mat-label>
         <mat-select formControlName="presentacion" required>
           <mat-option [value]="''" disabled>Seleccione…</mat-option>
@@ -30,7 +30,7 @@
         </mat-select>
         <mat-error>{{ primerError(formulario.controls.presentacion) }}</mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Concentración</mat-label>
         <input
           matInput
@@ -44,12 +44,12 @@
     </div>
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Laboratorio</mat-label>
         <input matInput formControlName="laboratorio" maxlength="80" required />
         <mat-error>{{ primerError(formulario.controls.laboratorio) }}</mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Lote</mat-label>
         <input matInput formControlName="lote" maxlength="40" required />
         <mat-error>{{ primerError(formulario.controls.lote) }}</mat-error>
@@ -58,13 +58,13 @@
 
     <div class="fila-campos">
       @if (medicamento) {
-        <mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Stock actual</mat-label>
           <input matInput [value]="medicamento.cantidadStock" disabled />
           <mat-hint>Solo cambia con entradas y salidas.</mat-hint>
         </mat-form-field>
       } @else {
-        <mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
           <mat-label>Stock inicial</mat-label>
           <input
             matInput
@@ -78,7 +78,7 @@
           <mat-error>{{ primerError(formulario.controls.cantidadStock) }}</mat-error>
         </mat-form-field>
       }
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Stock mínimo</mat-label>
         <input
           matInput
@@ -94,12 +94,14 @@
     </div>
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Fecha de vencimiento</mat-label>
-        <input matInput type="date" formControlName="fechaVencimiento" required />
+        <input matInput [matDatepicker]="vencimiento" formControlName="fechaVencimiento" required />
+        <mat-datepicker-toggle matIconSuffix [for]="vencimiento" />
+        <mat-datepicker #vencimiento />
         <mat-error>{{ primerError(formulario.controls.fechaVencimiento) }}</mat-error>
       </mat-form-field>
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Ubicación</mat-label>
         <input
           matInput
