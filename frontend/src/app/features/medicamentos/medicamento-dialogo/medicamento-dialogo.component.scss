@@ -4,3 +4,10 @@
 mat-form-field {
   margin-bottom: 8px;
 }
+
+// Cada caja de entrada conserva su altura natural (56 px): el error de dos líneas de
+// «Ubicación» no debe estirar la caja de «Fecha de vencimiento» de la misma fila
+// (align-items por defecto en .fila-campos es stretch).
+.fila-campos {
+  align-items: flex-start;
+}
