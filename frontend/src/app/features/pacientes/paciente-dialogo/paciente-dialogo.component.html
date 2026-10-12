@@ -6,20 +6,20 @@
   <mat-dialog-content>
     <app-errores-formulario [mensajes]="errores()" />
 
-    <mat-form-field class="campo-completo">
+    <mat-form-field class="campo-completo" subscriptSizing="dynamic">
       <mat-label>Nombre completo</mat-label>
       <input matInput formControlName="nombre" maxlength="60" required cdkFocusInitial />
       <mat-error>{{ primerError(formulario.controls.nombre) }}</mat-error>
     </mat-form-field>
 
     <div class="fila-campos">
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Edad</mat-label>
         <input matInput type="number" formControlName="edad" min="0" max="120" step="1" required />
         <mat-error>{{ primerError(formulario.controls.edad) }}</mat-error>
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Habitación</mat-label>
         <input
           matInput
