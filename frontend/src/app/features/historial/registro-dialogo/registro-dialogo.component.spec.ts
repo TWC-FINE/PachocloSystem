@@ -1,4 +1,5 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
@@ -19,6 +20,11 @@ type Uuid = ReturnType<Crypto['randomUUID']>;
 function simularClaves(): void {
   let n = 0;
   vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `clave-${++n}` as Uuid);
+}
+
+/** El formulario del diálogo: la propiedad es `protected`, de ahí el cast. */
+function formularioDe(fixture: ComponentFixture<RegistroDialogoComponent>): FormGroup {
+  return (fixture.componentInstance as unknown as { formulario: FormGroup }).formulario;
 }
 
 describe('RegistroDialogoComponent', () => {
@@ -51,6 +57,7 @@ describe('RegistroDialogoComponent', () => {
     const estable = () => fixture.whenStable();
     return {
       elemento,
+      fixture,
       elegirTipo: async (etiqueta: string) => {
         Array.from(elemento.querySelectorAll('mat-radio-button'))
           .find((r) => r.textContent?.trim() === etiqueta)!
@@ -110,6 +117,24 @@ describe('RegistroDialogoComponent', () => {
 
     expect(servicio.crear).not.toHaveBeenCalled();
     expect(errores()).toEqual(['Debe seleccionar un tipo de registro.']);
+  });
+
+  it('tocar un radio sin elegir (el grupo queda tocado) no muestra el aviso de tipo', async () => {
+    const { fixture, elemento } = await renderizar();
+
+    // Es lo que hace Material al interactuar con un radio: marca `touched` sin asignar valor.
+    formularioDe(fixture).get('tipo')!.markAsTouched();
+    fixture.detectChanges();
+
+    expect(elemento.querySelector('fieldset.grupo mat-error')).toBeNull();
+  });
+
+  it('elegir un tipo no deja el aviso de tipo obligatorio', async () => {
+    const { elegirTipo, elemento } = await renderizar();
+
+    await elegirTipo('Evolución');
+
+    expect(elemento.querySelector('fieldset.grupo mat-error')).toBeNull();
   });
 
   it.each([

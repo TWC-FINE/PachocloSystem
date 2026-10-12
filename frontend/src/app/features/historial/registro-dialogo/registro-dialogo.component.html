@@ -16,7 +16,7 @@
           <mat-radio-button [value]="opcion">{{ etiquetasTipo[opcion] }}</mat-radio-button>
         }
       </mat-radio-group>
-      @if (formulario.controls.tipo.touched && formulario.controls.tipo.invalid) {
+      @if (intentado() && formulario.controls.tipo.invalid) {
         <mat-error>{{ primerError(formulario.controls.tipo) }}</mat-error>
       }
     </fieldset>

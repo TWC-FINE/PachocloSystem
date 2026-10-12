@@ -215,6 +215,8 @@ export class RegistroDialogoComponent {
   });
   protected readonly enviando = signal(false);
   protected readonly errores = signal<readonly string[]>([]);
+  /** Tras pulsar «Guardar» con el formulario incompleto: solo entonces se muestran los avisos. */
+  protected readonly intentado = signal(false);
   /** Tras un resultado incierto: campos bloqueados; solo «Reintentar» o «Cancelar». */
   protected readonly incierto = signal(false);
   /** Clave del intento actual: nueva al abrir el diálogo, tras un alta correcta y tras un 409. */
@@ -259,6 +261,7 @@ export class RegistroDialogoComponent {
       return;
     }
     if (this.formulario.invalid) {
+      this.intentado.set(true);
       this.formulario.markAllAsTouched();
       return;
     }
