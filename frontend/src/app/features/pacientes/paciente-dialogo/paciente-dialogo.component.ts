@@ -36,6 +36,7 @@ export interface DatosPacienteDialogo {
     ErroresFormularioComponent,
   ],
   templateUrl: './paciente-dialogo.component.html',
+  styleUrl: './paciente-dialogo.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PacienteDialogoComponent {
