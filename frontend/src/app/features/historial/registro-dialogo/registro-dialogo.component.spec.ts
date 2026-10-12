@@ -58,6 +58,11 @@ describe('RegistroDialogoComponent', () => {
     return {
       elemento,
       fixture,
+      /** ¿Muestra el campo de contenido su aviso? Mira la clase de Material, no el nodo `mat-error`. */
+      contenidoEnError: () =>
+        Array.from(elemento.querySelectorAll<HTMLElement>('mat-form-field'))
+          .find((campo) => campo.querySelector('[formControlName="contenido"]'))
+          ?.classList.contains('mat-form-field-invalid') === true,
       elegirTipo: async (etiqueta: string) => {
         Array.from(elemento.querySelectorAll('mat-radio-button'))
           .find((r) => r.textContent?.trim() === etiqueta)!
@@ -150,6 +155,58 @@ describe('RegistroDialogoComponent', () => {
 
     expect(servicio.crear).not.toHaveBeenCalled();
     expect(errores()).toEqual([mensaje]);
+  });
+
+  it('cambiar de tipo con el contenido vacío oculta su aviso y reinicia su estado', async () => {
+    const { fixture, elegirTipo, rellenar, contenidoEnError } = await renderizar();
+
+    await elegirTipo('Evolución');
+    await rellenar({ contenido: '' });
+    expect(contenidoEnError()).toBe(true);
+
+    await elegirTipo('Medicación');
+    fixture.detectChanges();
+
+    expect(formularioDe(fixture).get('contenido')!.touched).toBe(false);
+    expect(formularioDe(fixture).get('contenido')!.pristine).toBe(true);
+    expect(contenidoEnError()).toBe(false);
+  });
+
+  it('cambiar de tipo conserva el texto ya escrito', async () => {
+    const { elegirTipo, rellenar, elemento } = await renderizar();
+
+    await elegirTipo('Evolución');
+    await rellenar({ contenido: 'Mejora progresiva' });
+    await elegirTipo('Medicación');
+
+    expect(
+      elemento.querySelector<HTMLTextAreaElement>('[formControlName="contenido"]')!.value,
+    ).toBe('Mejora progresiva');
+  });
+
+  it('guardar con el contenido vacío y sin tocar muestra su aviso', async () => {
+    const { elegirTipo, enviar, contenidoEnError } = await renderizar();
+
+    await elegirTipo('Evolución');
+    expect(contenidoEnError()).toBe(false);
+
+    await enviar();
+
+    expect(contenidoEnError()).toBe(true);
+  });
+
+  it('cambiar de tipo tras un intento de guardar no mantiene el aviso del contenido', async () => {
+    const { fixture, elegirTipo, enviar, contenidoEnError } = await renderizar();
+
+    await elegirTipo('Evolución');
+    await enviar();
+    expect(contenidoEnError()).toBe(true);
+
+    await elegirTipo('Medicación');
+    fixture.detectChanges();
+
+    expect(contenidoEnError()).toBe(false);
+    expect(formularioDe(fixture).get('contenido')!.touched).toBe(false);
   });
 
   it('crea un diagnóstico con el autor del usuario y el contenido recortado', async () => {
@@ -466,6 +523,14 @@ describe('RegistroDialogoComponent · medicación', () => {
     await estable();
     return {
       elemento,
+      /** Elige un tipo de registro pulsando su radio. */
+      elegirTipo: async (etiqueta: string) => {
+        Array.from(elemento.querySelectorAll('mat-radio-button'))
+          .find((r) => r.textContent?.trim() === etiqueta)!
+          .querySelector('input')!
+          .click();
+        await estable();
+      },
       casilla: () => elemento.querySelector<HTMLInputElement>('mat-checkbox input')!,
       marcarDescuento: async () => {
         elemento.querySelector<HTMLInputElement>('mat-checkbox input')!.click();
@@ -568,6 +633,25 @@ describe('RegistroDialogoComponent · medicación', () => {
         idMedicamento: 'MED-0001',
         cantidad: 2,
       },
+      'clave-1',
+    );
+  });
+
+  it('cambiar de tipo y volver conserva medicamento, cantidad y el payload', async () => {
+    servicio.crear.mockReturnValue(of(creado));
+    const { marcarDescuento, elegir, elegirTipo, enviar } = await preparar();
+
+    await marcarDescuento();
+    await elegir('MED-0001', '2');
+
+    await elegirTipo('Evolución');
+    await elegirTipo('Medicación');
+
+    await enviar();
+
+    expect(servicio.crear).toHaveBeenCalledWith(
+      'PAC-0001',
+      { ...sinDescuento, idMedicamento: 'MED-0001', cantidad: 2 },
       'clave-1',
     );
   });

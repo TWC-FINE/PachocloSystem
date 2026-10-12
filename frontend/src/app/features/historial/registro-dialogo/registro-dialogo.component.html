@@ -118,7 +118,13 @@
             }
           }
         </mat-label>
-        <textarea matInput formControlName="contenido" rows="4" required></textarea>
+        <textarea
+          matInput
+          formControlName="contenido"
+          rows="4"
+          required
+          [errorStateMatcher]="matcherContenido"
+        ></textarea>
         <mat-error>{{ primerError(formulario.controls.contenido) }}</mat-error>
       </mat-form-field>
 
