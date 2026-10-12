@@ -1,0 +1,6 @@
+// Con subscriptSizing="dynamic" el subscript reserva el alto real del error (a 375 px los
+// mensajes largos ocupan dos líneas); el margen garantiza el hueco mínimo de 8 px entre cada
+// campo y el siguiente, también cuando .fila-campos salta de línea.
+mat-form-field {
+  margin-bottom: 8px;
+}

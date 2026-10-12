@@ -51,6 +51,7 @@ function texto(obligatorioMensaje: string, maximo: number, maximoMensaje: string
     ErroresFormularioComponent,
   ],
   templateUrl: './medicamento-dialogo.component.html',
+  styleUrl: './medicamento-dialogo.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicamentoDialogoComponent {
