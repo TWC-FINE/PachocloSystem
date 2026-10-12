@@ -158,18 +158,18 @@
             <div class="fila-campos">
               <mat-form-field>
                 <mat-label>Medicamento</mat-label>
-                <select matNativeControl formControlName="idMedicamento" required>
-                  <option value="" disabled>Seleccione…</option>
+                <mat-select formControlName="idMedicamento" required>
+                  <mat-option [value]="''" disabled>Seleccione…</mat-option>
                   @for (m of medicamentosInventario(); track m.idMedicamento) {
-                    <option
+                    <mat-option
                       [value]="m.idMedicamento"
                       [disabled]="m.vencido || m.cantidadStock === 0"
                     >
                       {{ m.nombre }} {{ m.concentracion }} · lote {{ m.lote }} ·
                       {{ m.vencido ? 'vencido' : 'stock ' + m.cantidadStock }}
-                    </option>
+                    </mat-option>
                   }
-                </select>
+                </mat-select>
                 <mat-error>{{ primerError(formulario.controls.idMedicamento) }}</mat-error>
               </mat-form-field>
               <mat-form-field>

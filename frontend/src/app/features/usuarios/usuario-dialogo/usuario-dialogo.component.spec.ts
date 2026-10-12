@@ -71,11 +71,21 @@ describe('UsuarioDialogoComponent', () => {
       elemento,
       rellenar: async (valores: Record<string, string>) => {
         for (const [nombre, valor] of Object.entries(valores)) {
-          const campo = elemento.querySelector<HTMLInputElement | HTMLSelectElement>(
-            `[formControlName="${nombre}"]`,
-          )!;
-          campo.value = valor;
-          campo.dispatchEvent(new Event(campo instanceof HTMLSelectElement ? 'change' : 'input'));
+          const campo = elemento.querySelector<HTMLElement>(`[formControlName="${nombre}"]`);
+          if (!campo) continue;
+          if (campo.tagName === 'MAT-SELECT') {
+            campo.click();
+            fixture.detectChanges();
+            await estable();
+            const opcion = Array.from(
+              document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'),
+            ).find((o) => o.textContent?.includes('(' + valor + ')'));
+            opcion?.click();
+            await estable();
+          } else {
+            (campo as HTMLInputElement).value = valor;
+            campo.dispatchEvent(new Event('input'));
+          }
         }
         await estable();
       },
@@ -86,12 +96,22 @@ describe('UsuarioDialogoComponent', () => {
           .click();
         await estable();
       },
-      opcionesTrabajador: () =>
-        Array.from(
-          elemento.querySelectorAll<HTMLOptionElement>('[formControlName="idTrabajador"] option'),
+      opcionesTrabajador: async () => {
+        const select = elemento.querySelector<HTMLElement>('[formControlName="idTrabajador"]')!;
+        select.click();
+        fixture.detectChanges();
+        await estable();
+        const valores = Array.from(
+          document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'),
         )
-          .filter((o) => o.value)
-          .map((o) => o.value),
+          .map((o) => o.textContent?.trim() ?? '')
+          .filter((t) => /\([^)]+\)$/.test(t))
+          .map((t) => t.slice(t.lastIndexOf('(') + 1, -1));
+        // Cierra el panel para no interferir con los pasos siguientes.
+        select.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await estable();
+        return valores;
+      },
       enviar: async () => {
         elemento.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
         await estable();
@@ -159,7 +179,7 @@ describe('UsuarioDialogoComponent', () => {
       repeticion: 'clave-de-carlos',
     });
     await elegirRol('Doctor');
-    expect(opcionesTrabajador()).toEqual(['DOC-0002']);
+    expect(await opcionesTrabajador()).toEqual(['DOC-0002']);
 
     await enviar();
     expect(errores()).toEqual(['El usuario con rol DOCTOR debe estar vinculado a un trabajador.']);

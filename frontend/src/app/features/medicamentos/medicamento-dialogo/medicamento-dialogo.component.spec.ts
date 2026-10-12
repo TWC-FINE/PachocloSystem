@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, throwError } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
-import { Medicamento } from '../medicamento.models';
+import { ETIQUETAS_PRESENTACION, Medicamento } from '../medicamento.models';
 import { MedicamentoService } from '../medicamento.service';
 import {
   DatosMedicamentoDialogo,
@@ -44,17 +44,27 @@ describe('MedicamentoDialogoComponent', () => {
     await fixture.whenStable();
     const elemento = fixture.nativeElement as HTMLElement;
     const campo = (nombre: string) =>
-      elemento.querySelector<HTMLInputElement | HTMLSelectElement>(`[formControlName="${nombre}"]`);
+      elemento.querySelector<HTMLElement>(`[formControlName="${nombre}"]`);
+    const establecer = () => fixture.whenStable();
     return {
       elemento,
       campo,
-      rellenar: (valores: Record<string, string>) => {
+      rellenar: async (valores: Record<string, string>) => {
         for (const [nombre, valor] of Object.entries(valores)) {
           const control = campo(nombre)!;
-          control.value = valor;
-          control.dispatchEvent(
-            new Event(control instanceof HTMLSelectElement ? 'change' : 'input'),
-          );
+          if (control.tagName === 'MAT-SELECT') {
+            control.click();
+            fixture.detectChanges();
+            await establecer();
+            const etiqueta = (ETIQUETAS_PRESENTACION as Record<string, string>)[valor];
+            Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'))
+              .find((o) => o.textContent?.trim() === etiqueta)!
+              .click();
+            await establecer();
+          } else {
+            (control as HTMLInputElement).value = valor;
+            control.dispatchEvent(new Event('input'));
+          }
         }
       },
       enviar: async () => {
@@ -104,7 +114,7 @@ describe('MedicamentoDialogoComponent', () => {
   it('valida los rangos de stock', async () => {
     const { rellenar, enviar, erroresCampos } = await renderizar({});
 
-    rellenar({ ...completo, cantidadStock: '-1', stockMinimo: '1000001' });
+    await rellenar({ ...completo, cantidadStock: '-1', stockMinimo: '1000001' });
     await enviar();
 
     expect(servicio.registrar).not.toHaveBeenCalled();
@@ -118,7 +128,7 @@ describe('MedicamentoDialogoComponent', () => {
     servicio.registrar.mockReturnValue(of(dolex));
     const { rellenar, enviar } = await renderizar({});
 
-    rellenar(completo);
+    await rellenar(completo);
     await enviar();
 
     expect(servicio.registrar).toHaveBeenCalledWith({
@@ -145,10 +155,10 @@ describe('MedicamentoDialogoComponent', () => {
       (i) => i.value === '120',
     )!;
     expect(stockActual.disabled).toBe(true);
-    expect(campo('presentacion')!.value).toBe('TABLETA');
-    expect(campo('fechaVencimiento')!.value).toBe('2027-01-31');
+    expect(campo('presentacion')?.textContent).toContain('Tableta');
+    expect((campo('fechaVencimiento') as HTMLInputElement)!.value).toBe('2027-01-31');
 
-    rellenar({ fechaVencimiento: '2026-12-31' });
+    await rellenar({ fechaVencimiento: '2026-12-31' });
     await enviar();
 
     const [id, datos] = servicio.editar.mock.calls[0] as unknown as [string, object];
@@ -168,7 +178,7 @@ describe('MedicamentoDialogoComponent', () => {
     );
     const { elemento, rellenar, enviar } = await renderizar({});
 
-    rellenar(completo);
+    await rellenar(completo);
     await enviar();
 
     expect(elemento.querySelector('[role="alert"]')?.textContent).toContain(

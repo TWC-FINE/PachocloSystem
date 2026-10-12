@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { mensajesDeError } from '../../../core/http/api-error';
 import { ErroresFormularioComponent } from '../../../shared/errores-formulario/errores-formulario.component';
 import {
@@ -45,6 +46,7 @@ function texto(obligatorioMensaje: string, maximo: number, maximoMensaje: string
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     ErroresFormularioComponent,
   ],

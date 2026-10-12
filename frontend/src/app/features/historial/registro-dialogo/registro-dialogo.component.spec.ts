@@ -392,10 +392,17 @@ describe('RegistroDialogoComponent · medicación', () => {
   /** Todos los campos del formulario (tipo, contenido, casilla, medicamento, cantidad). */
   const campos = () =>
     Array.from(
-      raiz.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(
-        'form input, form textarea, form select',
-      ),
+      raiz.querySelectorAll<HTMLElement>('form input, form textarea, form select, form mat-select'),
     );
+  /** ¿Está deshabilitado el campo? Un `mat-select` lo refleja con `aria-disabled`/clase. */
+  const deshabilitado = (campo: HTMLElement) =>
+    campo instanceof HTMLInputElement || campo instanceof HTMLTextAreaElement
+      ? campo.disabled
+      : campo.getAttribute('aria-disabled') === 'true' ||
+        campo.matches('.mat-mdc-select-disabled') ||
+        campo.querySelector('[aria-disabled="true"], .mat-mdc-select-disabled') !== null ||
+        campo.closest('mat-form-field')?.classList.contains('mat-form-field-disabled') === true ||
+        campo.closest('mat-form-field')?.classList.contains('mat-mdc-form-field-disabled') === true;
   /** Textos de los botones de acción del diálogo. */
   const botones = () =>
     Array.from(raiz.querySelectorAll('mat-dialog-actions button')).map((b) =>
@@ -439,8 +446,30 @@ describe('RegistroDialogoComponent · medicación', () => {
         elemento.querySelector<HTMLInputElement>('mat-checkbox input')!.click();
         await estable();
       },
+      /** Abre el desplegable de medicamentos y devuelve sus opciones (lo cierra después). */
+      opcionesMedicamento: async () => {
+        const select = elemento.querySelector<HTMLElement>('[formControlName="idMedicamento"]')!;
+        select.click();
+        fixture.detectChanges();
+        await estable();
+        const opciones = Array.from(
+          document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'),
+        );
+        // Cierra el panel para no interferir con los pasos siguientes.
+        select.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await estable();
+        return opciones;
+      },
       elegir: async (id: string, cantidad: string) => {
-        escribir('[formControlName="idMedicamento"]', id, 'change');
+        const select = elemento.querySelector<HTMLElement>('[formControlName="idMedicamento"]')!;
+        select.click();
+        fixture.detectChanges();
+        await estable();
+        const nombre = id === 'MED-0002' ? caducado.nombre : dolex.nombre;
+        Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'))
+          .find((o) => o.textContent?.includes(nombre))!
+          .click();
+        await estable();
         escribir('[formControlName="cantidad"]', cantidad);
         await estable();
       },
@@ -483,12 +512,18 @@ describe('RegistroDialogoComponent · medicación', () => {
 
   it('con descuento exige medicamento y cantidad, y envía los dos', async () => {
     servicio.crear.mockReturnValue(of(creado));
-    const { elemento, marcarDescuento, elegir, enviar, erroresCampos } = await preparar();
+    const { elemento, marcarDescuento, opcionesMedicamento, elegir, enviar, erroresCampos } =
+      await preparar();
 
     await marcarDescuento();
     expect(inventario.listar).toHaveBeenCalledTimes(1);
-    const vencido = elemento.querySelector<HTMLOptionElement>('option[value="MED-0002"]');
-    expect(vencido?.disabled).toBe(true);
+    const vencido = (await opcionesMedicamento()).find((o) =>
+      o.textContent?.includes(caducado.nombre),
+    );
+    expect(
+      vencido?.getAttribute('aria-disabled') === 'true' ||
+        vencido?.classList.contains('mat-mdc-option-disabled'),
+    ).toBe(true);
 
     await enviar();
     expect(servicio.crear).not.toHaveBeenCalled();
@@ -530,7 +565,7 @@ describe('RegistroDialogoComponent · medicación', () => {
 
   it('desde el aviso se puede reintentar la carga del inventario', async () => {
     inventario.listar.mockReturnValueOnce(caido()).mockReturnValueOnce(of([dolex]));
-    const { elemento, casilla, marcarDescuento } = await preparar();
+    const { elemento, casilla, marcarDescuento, opcionesMedicamento } = await preparar();
     await marcarDescuento();
 
     elemento.querySelector<HTMLButtonElement>('.aviso-inventario button')!.click();
@@ -539,7 +574,9 @@ describe('RegistroDialogoComponent · medicación', () => {
     expect(inventario.listar).toHaveBeenCalledTimes(2);
     expect(casilla().checked).toBe(true);
     expect(elemento.querySelector('.aviso-inventario')).toBeNull();
-    expect(elemento.querySelector('option[value="MED-0001"]')).not.toBeNull();
+    expect((await opcionesMedicamento()).some((o) => o.textContent?.includes(dolex.nombre))).toBe(
+      true,
+    );
   });
 
   it('si el descuento falla (stock insuficiente) explica que no se guardó nada', async () => {
@@ -558,7 +595,7 @@ describe('RegistroDialogoComponent · medicación', () => {
     ]);
     expect(dialogo.close).not.toHaveBeenCalled();
     // Un fallo definitivo no bloquea: se puede corregir y volver a guardar.
-    expect(campos().every((c) => !c.disabled)).toBe(true);
+    expect(campos().every((c) => !deshabilitado(c))).toBe(true);
     expect(dialogo.disableClose).toBe(false);
   });
 
@@ -585,7 +622,7 @@ describe('RegistroDialogoComponent · medicación', () => {
       expect(alerta()).toEqual([MENSAJE_503, NOTA_INCIERTO]);
       expect(alerta().join(' ')).not.toContain('pudo registrarse igualmente');
       expect(campos()).not.toHaveLength(0);
-      expect(campos().every((c) => c.disabled)).toBe(true);
+      expect(campos().every((c) => deshabilitado(c))).toBe(true);
       expect(elemento.querySelector('button[type="submit"]')).toBeNull();
       expect(botones()).toEqual(['Cancelar', 'Reintentar']);
       // Tampoco se cierra con Esc ni clic fuera (se saltaría el aviso de Cancelar).
@@ -613,7 +650,7 @@ describe('RegistroDialogoComponent · medicación', () => {
 
       await pulsar('Reintentar');
       expect(alerta()).toEqual(['Stock insuficiente.', NOTA_INCIERTO]);
-      expect(campos().every((c) => c.disabled)).toBe(true);
+      expect(campos().every((c) => deshabilitado(c))).toBe(true);
       expect(botones()).toEqual(['Cancelar', 'Reintentar']);
 
       await pulsar('Reintentar');
@@ -656,7 +693,7 @@ describe('RegistroDialogoComponent · medicación', () => {
       ['un error no HTTP', new Error('x')],
     ])('%s también bloquea y el reintento usa la misma clave', async (_caso, fallo) => {
       const { pulsar } = await medicacionSinConfirmar(throwError(() => fallo));
-      expect(campos().every((c) => c.disabled)).toBe(true);
+      expect(campos().every((c) => deshabilitado(c))).toBe(true);
       servicio.crear.mockReturnValueOnce(of(creado));
 
       await pulsar('Reintentar');
