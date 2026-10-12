@@ -16,7 +16,7 @@
           <mat-radio-button [value]="opcion">{{ etiquetasTipo[opcion] }}</mat-radio-button>
         }
       </mat-radio-group>
-      @if (formulario.controls.tipo.touched && formulario.controls.tipo.invalid) {
+      @if (intentado() && formulario.controls.tipo.invalid) {
         <mat-error>{{ primerError(formulario.controls.tipo) }}</mat-error>
       }
     </fieldset>
@@ -118,7 +118,13 @@
             }
           }
         </mat-label>
-        <textarea matInput formControlName="contenido" rows="4" required></textarea>
+        <textarea
+          matInput
+          formControlName="contenido"
+          rows="4"
+          required
+          [errorStateMatcher]="matcherContenido"
+        ></textarea>
         <mat-error>{{ primerError(formulario.controls.contenido) }}</mat-error>
       </mat-form-field>
 

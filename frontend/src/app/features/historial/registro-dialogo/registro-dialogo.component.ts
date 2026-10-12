@@ -8,13 +8,14 @@ import {
 } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
-import { merge, startWith } from 'rxjs';
+import { startWith } from 'rxjs';
 import { NotificacionService } from '../../../core/notificacion.service';
 import { PermisosService } from '../../../core/permisos';
 import { ApiError, mensajesDeError } from '../../../core/http/api-error';
@@ -215,6 +216,8 @@ export class RegistroDialogoComponent {
   });
   protected readonly enviando = signal(false);
   protected readonly errores = signal<readonly string[]>([]);
+  /** Tras pulsar «Guardar» con el formulario incompleto: solo entonces se muestran los avisos. */
+  protected readonly intentado = signal(false);
   /** Tras un resultado incierto: campos bloqueados; solo «Reintentar» o «Cancelar». */
   protected readonly incierto = signal(false);
   /** Clave del intento actual: nueva al abrir el diálogo, tras un alta correcta y tras un 409. */
@@ -229,11 +232,28 @@ export class RegistroDialogoComponent {
   );
   protected readonly etiquetasTipo = ETIQUETAS_TIPO;
   protected readonly primerError = primerError;
+  /**
+   * El aviso del contenido aparece si el campo se tocó o si se intentó guardar. Al cambiar de
+   * tipo se reinician ambos (ver constructor), así no arrastra el aviso del tipo anterior.
+   */
+  protected readonly matcherContenido: ErrorStateMatcher = {
+    isErrorState: (control) =>
+      !!control && control.invalid && (control.touched || this.intentado()),
+  };
   protected readonly signos = this.formulario.controls.signos.controls;
 
   constructor() {
-    const { tipo, descontarStock } = this.formulario.controls;
-    merge(tipo.valueChanges, descontarStock.valueChanges)
+    const { tipo, contenido, descontarStock } = this.formulario.controls;
+    tipo.valueChanges.pipe(startWith(null), takeUntilDestroyed()).subscribe(() => {
+      // Al cambiar de tipo, el contenido y el intento de guardado vuelven a cero, para no
+      // arrastrar el aviso del tipo anterior. El texto escrito se conserva (no se toca el
+      // valor) igual que el medicamento y la cantidad, que solo se habilitan o deshabilitan.
+      contenido.markAsPristine();
+      contenido.markAsUntouched();
+      this.intentado.set(false);
+      this.habilitarCampos();
+    });
+    descontarStock.valueChanges
       .pipe(startWith(null), takeUntilDestroyed())
       .subscribe(() => this.habilitarCampos());
     descontarStock.valueChanges
@@ -259,6 +279,7 @@ export class RegistroDialogoComponent {
       return;
     }
     if (this.formulario.invalid) {
+      this.intentado.set(true);
       this.formulario.markAllAsTouched();
       return;
     }

@@ -1,0 +1,22 @@
+// Con subscriptSizing="dynamic" el subscript reserva el alto real del error (a 375 px los
+// mensajes largos ocupan dos líneas); el margen garantiza el hueco mínimo de 8 px entre cada
+// campo y el siguiente, también cuando .fila-campos salta de línea.
+mat-form-field {
+  margin-bottom: 8px;
+}
+
+// Cada caja de entrada conserva su altura natural (56 px): el error de dos líneas de
+// «Ubicación» no debe estirar la caja de «Fecha de vencimiento» de la misma fila
+// (align-items por defecto en .fila-campos es stretch).
+.fila-campos {
+  align-items: flex-start;
+}
+
+// El texto «Seleccione…» del select de presentación (valor aún sin elegir) se muestra en el
+// color de error solo cuando el control está inválido y tocado (clase mat-form-field-invalid),
+// igual que el resto de los avisos. El selector cae sobre mat-select, elemento del template
+// (no hace falta ::ng-deep), y el color se hereda al valor interno; al elegir un valor la
+// clase desaparece y vuelve el color normal.
+mat-form-field.mat-form-field-invalid mat-select {
+  color: var(--mat-sys-error);
+}
