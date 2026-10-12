@@ -20,3 +20,23 @@
     font: var(--mat-sys-body-small);
   }
 }
+
+// Con subscriptSizing="dynamic" el subscript crece con el texto; este margen
+// garantiza un hueco mínimo de 4px entre el subscript y el campo siguiente.
+mat-form-field {
+  margin-bottom: 4px;
+}
+
+// Cada campo conserva su altura natural: el hint largo de "Contraseña" no debe
+// estirar a "Repita la contraseña" (align-items por defecto es stretch), y un
+// column-gap mayor separa mejor las cajas.
+.fila-campos {
+  align-items: flex-start;
+  column-gap: 24px;
+}
+
+.nota {
+  margin: 0 0 16px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}

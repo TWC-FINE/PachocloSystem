@@ -22,12 +22,12 @@
     <div class="fila-campos">
       <mat-form-field>
         <mat-label>Presentación</mat-label>
-        <select matNativeControl formControlName="presentacion" required>
-          <option value="" disabled>Seleccione…</option>
+        <mat-select formControlName="presentacion" required>
+          <mat-option [value]="''" disabled>Seleccione…</mat-option>
           @for (p of presentaciones; track p) {
-            <option [value]="p">{{ etiquetasPresentacion[p] }}</option>
+            <mat-option [value]="p">{{ etiquetasPresentacion[p] }}</mat-option>
           }
-        </select>
+        </mat-select>
         <mat-error>{{ primerError(formulario.controls.presentacion) }}</mat-error>
       </mat-form-field>
       <mat-form-field>

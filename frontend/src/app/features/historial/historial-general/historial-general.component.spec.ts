@@ -53,9 +53,14 @@ describe('HistorialGeneralComponent', () => {
     const { fixture, elemento } = await renderizar();
     servicio.listar.mockReturnValue(of([]));
 
-    const select = elemento.querySelector('select')!;
-    select.value = 'autor';
-    select.dispatchEvent(new Event('change'));
+    const select = elemento.querySelector<HTMLElement>('mat-select')!;
+    select.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    Array.from(document.querySelectorAll<HTMLElement>('.cdk-overlay-container mat-option'))
+      .find((o) => o.textContent?.trim() === 'Autor')!
+      .click();
+    await fixture.whenStable();
     const input = elemento.querySelector<HTMLInputElement>('input[type="search"]')!;
     input.value = ' eva ';
     input.dispatchEvent(new Event('input'));

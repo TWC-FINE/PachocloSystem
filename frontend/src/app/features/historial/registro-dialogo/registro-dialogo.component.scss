@@ -28,6 +28,19 @@ mat-error.error-grupo,
   font: var(--mat-sys-body-small);
 }
 
+// Con subscriptSizing="dynamic" el error reserva su alto real (sin desbordar
+// sobre la fila siguiente); el margen garantiza un hueco mínimo de 8px y cada
+// campo conserva su altura natural (align-items por defecto es stretch).
+.signos {
+  .fila-campos {
+    align-items: flex-start;
+  }
+
+  mat-form-field {
+    margin-bottom: 8px;
+  }
+}
+
 .descuento {
   margin-bottom: 8px;
 

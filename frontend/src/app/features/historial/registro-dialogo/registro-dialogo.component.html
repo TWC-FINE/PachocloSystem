@@ -22,9 +22,9 @@
     </fieldset>
 
     @if (tipo() === 'SIGNOS_VITALES') {
-      <div formGroupName="signos">
+      <div formGroupName="signos" class="signos">
         <div class="fila-campos">
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Temperatura (°C)</mat-label>
             <input
               matInput
@@ -36,7 +36,7 @@
             />
             <mat-error>{{ primerError(signos.temperatura) }}</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Frecuencia cardíaca (lpm)</mat-label>
             <input
               matInput
@@ -50,7 +50,7 @@
           </mat-form-field>
         </div>
         <div class="fila-campos">
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Presión sistólica (mmHg)</mat-label>
             <input
               matInput
@@ -62,7 +62,7 @@
             />
             <mat-error>{{ primerError(signos.presionSistolica) }}</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Presión diastólica (mmHg)</mat-label>
             <input
               matInput
@@ -79,7 +79,7 @@
           <mat-error class="error-grupo">{{ mensaje }}</mat-error>
         }
         <div class="fila-campos">
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Frecuencia respiratoria (rpm)</mat-label>
             <input
               matInput
@@ -91,13 +91,13 @@
             />
             <mat-error>{{ primerError(signos.frecRespiratoria) }}</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Saturación de oxígeno (%)</mat-label>
             <input matInput type="number" formControlName="saturacion" min="0" max="100" step="1" />
             <mat-error>{{ primerError(signos.saturacion) }}</mat-error>
           </mat-form-field>
         </div>
-        <mat-form-field class="campo-completo">
+        <mat-form-field class="campo-completo" subscriptSizing="dynamic">
           <mat-label>Observaciones (opcional)</mat-label>
           <textarea matInput formControlName="observaciones" rows="2"></textarea>
           <mat-error>{{ primerError(signos.observaciones) }}</mat-error>
@@ -158,18 +158,18 @@
             <div class="fila-campos">
               <mat-form-field>
                 <mat-label>Medicamento</mat-label>
-                <select matNativeControl formControlName="idMedicamento" required>
-                  <option value="" disabled>Seleccione…</option>
+                <mat-select formControlName="idMedicamento" required>
+                  <mat-option [value]="''" disabled>Seleccione…</mat-option>
                   @for (m of medicamentosInventario(); track m.idMedicamento) {
-                    <option
+                    <mat-option
                       [value]="m.idMedicamento"
                       [disabled]="m.vencido || m.cantidadStock === 0"
                     >
                       {{ m.nombre }} {{ m.concentracion }} · lote {{ m.lote }} ·
                       {{ m.vencido ? 'vencido' : 'stock ' + m.cantidadStock }}
-                    </option>
+                    </mat-option>
                   }
-                </select>
+                </mat-select>
                 <mat-error>{{ primerError(formulario.controls.idMedicamento) }}</mat-error>
               </mat-form-field>
               <mat-form-field>

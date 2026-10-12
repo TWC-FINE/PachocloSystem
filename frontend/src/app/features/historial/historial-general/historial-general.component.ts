@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { map, merge } from 'rxjs';
 import { crearListaRemota, textoBuscado } from '../../../shared/listas';
 import { FiltroHistorial } from '../historial.models';
@@ -26,6 +27,7 @@ interface Consulta {
     MatIconModule,
     MatButtonModule,
     MatProgressBarModule,
+    MatSelectModule,
     RegistrosComponent,
   ],
   templateUrl: './historial-general.component.html',

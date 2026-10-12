@@ -6,6 +6,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 import { forkJoin, startWith } from 'rxjs';
 import { Usuario } from '../../../core/auth/auth.models';
 import { mensajesDeError } from '../../../core/http/api-error';
@@ -39,6 +40,7 @@ function trabajadorDelRol(rol: () => Rol | null): ValidatorFn {
     MatFormFieldModule,
     MatInputModule,
     MatRadioModule,
+    MatSelectModule,
     MatButtonModule,
     ErroresFormularioComponent,
   ],

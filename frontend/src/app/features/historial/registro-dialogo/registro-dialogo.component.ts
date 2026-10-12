@@ -12,6 +12,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { merge, startWith } from 'rxjs';
 import { NotificacionService } from '../../../core/notificacion.service';
@@ -129,6 +130,7 @@ function diastolicaMenorQueSistolica(grupo: AbstractControl): ValidationErrors |
     MatRadioModule,
     MatCheckboxModule,
     MatProgressBarModule,
+    MatSelectModule,
     MatButtonModule,
     ErroresFormularioComponent,
   ],
