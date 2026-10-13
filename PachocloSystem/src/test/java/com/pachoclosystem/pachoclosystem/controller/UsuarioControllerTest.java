@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -75,6 +76,46 @@ class UsuarioControllerTest extends MockMvcBaseTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].username").value(username));
+    }
+
+    @Test
+    void elNombreDelTrabajadorAcompanaAlUsuarioYEsNullParaElAdmin() throws Exception {
+        String idDoctor = registrarDoctor();
+        String username = unico("doc");
+        crearUsuario(username, "DOCTOR", idDoctor);
+
+        perform(get("/api/usuarios").param("q", username))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].idTrabajador").value(idDoctor))
+                .andExpect(jsonPath("$[0].nombreCompleto").value("Eva Mora"));
+        perform(get("/api/usuarios/{id}", idDe(username)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombreCompleto").value("Eva Mora"));
+
+        // El administrador no tiene trabajador: null, no inventado.
+        perform(get("/api/usuarios").param("q", "admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].idTrabajador", nullValue()))
+                .andExpect(jsonPath("$[0].nombreCompleto", nullValue()));
+        perform(get("/api/usuarios/{id}", idDe("admin")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombreCompleto", nullValue()));
+    }
+
+    @Test
+    void siElTrabajadorVinculadoYaNoExisteElNombreEsNullYNoUnError() throws Exception {
+        String idDoctor = registrarDoctor();
+        String username = unico("doc");
+        crearUsuario(username, "DOCTOR", idDoctor);
+        // La baja del trabajador deja al usuario inactivo, pero el vínculo sigue en su fila.
+        perform(delete("/api/trabajadores/{id}", idDoctor)).andExpect(status().isNoContent());
+
+        perform(get("/api/usuarios").param("q", username))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idTrabajador").value(idDoctor))
+                .andExpect(jsonPath("$[0].nombreCompleto", nullValue()));
     }
 
     @Test

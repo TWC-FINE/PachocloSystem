@@ -13,10 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class TrabajadorService {
@@ -126,6 +130,31 @@ public class TrabajadorService {
                         || t.getNombreCompleto().toLowerCase(Locale.ROOT).contains(filtro)
                         || t.getIdTrabajador().toLowerCase(Locale.ROOT).contains(filtro))
                 .toList();
+    }
+
+    /**
+     * Nombres de los trabajadores indicados, indexados por su id, en
+     * <strong>una sola</strong> lectura: se traen todos (igual que
+     * {@link #listarTrabajadores(String)}; la plantilla de un hospital es pequeña)
+     * y se filtran en memoria. Sirve para rellenar el nombre del trabajador de
+     * varios usuarios sin una consulta por usuario (N+1).
+     *
+     * <p>Un id que ya no exista sencillamente no aparece en el mapa: el vínculo de
+     * un usuario sobrevive a la baja de su trabajador (lo deja inactivo), así que
+     * resolver su nombre no puede fallar.</p>
+     */
+    public Map<String, String> nombresPorId(Collection<String> idsTrabajador) {
+        Set<String> buscados = idsTrabajador.stream().filter(Objects::nonNull).collect(Collectors.toSet());
+        if (buscados.isEmpty()) {
+            return Map.of();
+        }
+        // A propósito: se lee la plantilla completa (una sola consulta) y se filtra
+        // en memoria, para resolver todos los ids de golpe. No lo "optimices" a una
+        // consulta por id: eso sería N+1. La plantilla de un hospital es pequeña.
+        return repositorio.obtenerTodos().stream()
+                .filter(t -> buscados.contains(t.getIdTrabajador()))
+                .collect(Collectors.toMap(TrabajadorHospital::getIdTrabajador,
+                        TrabajadorHospital::getNombreCompleto));
     }
 
     private void validarDatosDeRol(String rol, String especialidad, NivelExperiencia nivel) {

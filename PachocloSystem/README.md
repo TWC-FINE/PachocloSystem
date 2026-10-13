@@ -437,7 +437,7 @@ registro) están en `HistorialClinicoService`.
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/api/auth/login` | Público. `{ "username", "password" }` → JWT bearer |
-| GET | `/api/auth/me` | Autenticado. Devuelve `{ idUsuario, username, rol, idTrabajador, activo, debeCambiarPassword }` |
+| GET | `/api/auth/me` | Autenticado. Devuelve `{ idUsuario, username, rol, idTrabajador, nombreCompleto, activo, debeCambiarPassword }` (`nombreCompleto` es `null` para el ADMIN o si su trabajador ya no existe) |
 | POST | `/api/auth/password` | Autenticado. Cambia la contraseña del propio usuario: `{ "passwordActual", "passwordNueva" }` → `204`. El token usado queda revocado de inmediato y hay que volver a iniciar sesión. |
 
 Login correcto:
@@ -495,8 +495,9 @@ curl http://localhost:8080/api/pacientes -H "Authorization: Bearer eyJhbGciOiJIU
 | PATCH | `/api/usuarios/{id}/activar` | Reactiva (idempotente) | 200 / 404 / 409 |
 | PATCH | `/api/usuarios/{id}/password` | Restablece la contraseña `{password}`; deja el cambio obligatorio | 204 / 400 / 404 |
 
-Las respuestas son `{ idUsuario, username, rol, idTrabajador, activo, debeCambiarPassword }`
-y **nunca incluyen el hash** de la contraseña ni la versión del token. Un
+Las respuestas son `{ idUsuario, username, rol, idTrabajador, nombreCompleto, activo, debeCambiarPassword }`
+(`nombreCompleto` es `null` para el ADMIN o si su trabajador ya no existe) y
+**nunca incluyen el hash** de la contraseña ni la versión del token. Un
 usuario que no es ADMIN recibe `403` y una petición sin token, `401`, ambos
 con el cuerpo de error uniforme.
 

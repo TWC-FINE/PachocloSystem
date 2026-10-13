@@ -15,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Reglas de negocio de los usuarios.
@@ -135,6 +138,33 @@ public class UsuarioService {
                         || (u.getIdTrabajador() != null
                         && u.getIdTrabajador().toLowerCase(Locale.ROOT).contains(filtro)))
                 .toList();
+    }
+
+    /**
+     * Nombre completo del trabajador vinculado al usuario, o {@code null} si no
+     * tiene (el ADMIN) o si su trabajador ya no existe.
+     */
+    public String nombreDelTrabajador(Usuario usuario) {
+        return nombresDeTrabajadores(List.of(usuario)).get(usuario.getIdUsuario());
+    }
+
+    /**
+     * Nombre completo del trabajador de cada usuario, indexado por
+     * {@code idUsuario} ({@code null} para quien no tiene), en
+     * <strong>una sola</strong> lectura de trabajadores
+     * ({@link TrabajadorService#nombresPorId(Collection)}): listar usuarios no
+     * hace una consulta por usuario (N+1). La clave es el usuario y no el
+     * trabajador porque el ADMIN no tiene trabajador.
+     */
+    public Map<String, String> nombresDeTrabajadores(Collection<Usuario> usuarios) {
+        Map<String, String> porTrabajador =
+                trabajadorService.nombresPorId(usuarios.stream().map(Usuario::getIdTrabajador).toList());
+        Map<String, String> nombres = new HashMap<>();
+        for (Usuario usuario : usuarios) {
+            nombres.put(usuario.getIdUsuario(),
+                    usuario.getIdTrabajador() == null ? null : porTrabajador.get(usuario.getIdTrabajador()));
+        }
+        return nombres;
     }
 
     /** Devuelve el usuario; si no existe lanza {@link NotFoundException}. */

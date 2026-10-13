@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Gestión de usuarios, solo para ADMIN (regla en {@code SecurityConfig}).
@@ -42,33 +43,38 @@ public class UsuarioController {
         Usuario usuario = servicio.crearUsuario(request.username(), request.password(),
                 rolDe(request.rol()), request.idTrabajador(), true);
         return ResponseEntity.created(URI.create("/api/usuarios/" + usuario.getIdUsuario()))
-                .body(UsuarioResponse.from(usuario));
+                .body(respuestaDe(usuario));
     }
 
     /** Activos e inactivos; {@code q} filtra por ID, username o trabajador vinculado. */
     @GetMapping
     public List<UsuarioResponse> listar(@RequestParam(required = false) String q) {
-        return servicio.listar(q).stream().map(UsuarioResponse::from).toList();
+        List<Usuario> usuarios = servicio.listar(q);
+        // Los nombres se resuelven de una vez para todo el listado (sin N+1).
+        Map<String, String> nombres = servicio.nombresDeTrabajadores(usuarios);
+        return usuarios.stream()
+                .map(usuario -> UsuarioResponse.from(usuario, nombres.get(usuario.getIdUsuario())))
+                .toList();
     }
 
     @GetMapping("/{id}")
     public UsuarioResponse obtener(@PathVariable String id) {
-        return UsuarioResponse.from(servicio.obtener(id));
+        return respuestaDe(servicio.obtener(id));
     }
 
     @PatchMapping("/{id}/rol")
     public UsuarioResponse cambiarRol(@PathVariable String id, @RequestBody CambiarRolRequest request) {
-        return UsuarioResponse.from(servicio.cambiarRol(id, rolDe(request.rol()), request.idTrabajador()));
+        return respuestaDe(servicio.cambiarRol(id, rolDe(request.rol()), request.idTrabajador()));
     }
 
     @PatchMapping("/{id}/desactivar")
     public UsuarioResponse desactivar(@PathVariable String id, Authentication autenticacion) {
-        return UsuarioResponse.from(servicio.desactivar(id, autenticacion.getName()));
+        return respuestaDe(servicio.desactivar(id, autenticacion.getName()));
     }
 
     @PatchMapping("/{id}/activar")
     public UsuarioResponse activar(@PathVariable String id) {
-        return UsuarioResponse.from(servicio.activar(id));
+        return respuestaDe(servicio.activar(id));
     }
 
     @PatchMapping("/{id}/password")
@@ -76,6 +82,14 @@ public class UsuarioController {
                                                     @RequestBody PasswordRequest request) {
         servicio.restablecerPassword(id, request.password());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Respuesta de un usuario con el nombre completo de su trabajador vinculado
+     * (una lectura; {@code null} si no tiene o si su trabajador ya no existe).
+     */
+    private UsuarioResponse respuestaDe(Usuario usuario) {
+        return UsuarioResponse.from(usuario, servicio.nombreDelTrabajador(usuario));
     }
 
     /** Texto del rol a {@link Rol}; {@code null} si falta o no es válido (lo informa el servicio). */
