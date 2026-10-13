@@ -27,58 +27,13 @@
   .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: 8px 10px; margin: 8px 0; }
   .GET { color: #1a7f37; } .POST { color: #0b5cad; } .PUT { color: #9a6700; } .PATCH { color: #8250df; } .DELETE { color: #cf222e; }
   .break { page-break-before: always; }
-  .portada { height: 235mm; display: flex; flex-direction: column; justify-content: center; text-align: center; page-break-after: always; }
-  .portada .proyecto { font-size: 13pt; color: #666; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 10px; }
-  .portada h1 { font-size: 30pt; margin: 0 0 8px; }
-  .portada .titulo-doc { font-size: 16pt; color: #4a2340; margin: 0 0 36px; }
-  .portada dl { margin: 0 auto; text-align: left; display: grid; grid-template-columns: auto auto; gap: 8px 16px; font-size: 12pt; }
-  .portada dt { font-weight: 600; color: #4a2340; }
-  .portada dd { margin: 0; }
 </style>
 </head>
 <body>
 
-<section class="portada">
-  <p class="proyecto">Proyecto</p>
-  <h1>PachocloSystem</h1>
-  <p class="titulo-doc">API REST: endpoints y métodos HTTP</p>
-  <dl>
-    <dt>Microservicios</dt><dd>PachocloSystem y MedicamentosService</dd>
-    <dt>Integrantes</dt><dd>Angel Antonio Suarez Vera</dd>
-  </dl>
-</section>
-
 <h1>API REST: endpoints y métodos HTTP</h1>
-<p class="sub">PachocloSystem · Sistema Hospitalario · Entrega del corte 2</p>
 
-<h2>1. Arquitectura</h2>
-<p>El sistema tiene dos microservicios Spring Boot independientes y un frontend Angular. Cada servicio tiene su propia base de datos PostgreSQL y no comparten código.</p>
-<div class="arch">Frontend Angular  ──HTTP + JWT──▶  PachocloSystem  ──HTTP + X-Api-Key──▶  MedicamentosService
-  (puerto 4200)                      (puerto 8080)                          (puerto 8081)
-                                     Auth, pacientes,                       Inventario, stock
-                                     trabajadores, usuarios,                y vencimientos
-                                     historial clínico</div>
-<ul>
-  <li><b>Frontend → PachocloSystem:</b> todas las peticiones van a <code>/api/**</code> con el token JWT en la cabecera <code>Authorization: Bearer</code>.</li>
-  <li><b>PachocloSystem → MedicamentosService:</b> comunicación HTTP real mediante <code>RestClient</code> (clase <code>MedicamentosClient</code>), autenticada con una clave compartida en la cabecera <code>X-Api-Key</code>. PachocloSystem es la única puerta de entrada a los medicamentos: el frontend nunca llama directamente a MedicamentosService.</li>
-  <li>Al crear un registro clínico de tipo <b>medicación</b> que indica medicamento y cantidad, PachocloSystem llama a <code>POST /api/medicamentos/{id}/salidas</code> de MedicamentosService para descontar el stock.</li>
-  <li>Si MedicamentosService no está disponible, PachocloSystem responde <b>503</b> y solo el módulo de medicamentos se ve afectado.</li>
-</ul>
-
-<div class="blk"><h2>2. Convenciones HTTP</h2>
-<table>
-  <tr><th>Método</th><th>Uso en la API</th><th>Respuesta exitosa</th></tr>
-  <tr><td class="m GET">GET</td><td>Listar o consultar recursos. Los listados aceptan <code>?q=</code> para buscar.</td><td>200 OK</td></tr>
-  <tr><td class="m POST">POST</td><td>Crear un recurso o registrar una operación (entrada/salida de stock, login).</td><td>201 Created + cabecera <code>Location</code></td></tr>
-  <tr><td class="m PUT">PUT</td><td>Reemplazar todos los datos editables de un recurso.</td><td>200 OK</td></tr>
-  <tr><td class="m PATCH">PATCH</td><td>Modificar un solo aspecto del recurso (habitación, rol, estado, contraseña).</td><td>200 OK / 204 No Content</td></tr>
-  <tr><td class="m DELETE">DELETE</td><td>Eliminar un recurso.</td><td>204 No Content</td></tr>
-</table>
-<p class="meta">Errores: 400 (datos inválidos), 401 (sin autenticar), 403 (rol sin permiso), 404 (no existe), 409 (conflicto), 503 (servicio de medicamentos no disponible).</p></div>
-
-<h2 class="break">3. Endpoints de PachocloSystem (puerto 8080)</h2>
-
-<div class="blk"><h3>3.1 AuthController</h3>
+<div class="blk"><h3>AuthController</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Autenticación</td><td class="m POST">POST</td><td><code>/api/auth/login</code></td><td>Iniciar sesión y obtener el token JWT</td></tr>
@@ -86,7 +41,7 @@
   <tr><td class="s">Autenticación</td><td class="m POST">POST</td><td><code>/api/auth/password</code></td><td>Cambiar la contraseña propia</td></tr>
 </table></div>
 
-<div class="blk"><h3>3.2 PacienteController</h3>
+<div class="blk"><h3>PacienteController</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Pacientes</td><td class="m POST">POST</td><td><code>/api/pacientes</code></td><td>Crear paciente</td></tr>
@@ -97,7 +52,7 @@
   <tr><td class="s">Pacientes</td><td class="m DELETE">DELETE</td><td><code>/api/pacientes/{id}</code></td><td>Dar de baja al paciente (baja lógica: se conserva con su historial)</td></tr>
 </table></div>
 
-<div class="blk"><h3>3.3 TrabajadorController</h3>
+<div class="blk"><h3>TrabajadorController</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Trabajadores</td><td class="m POST">POST</td><td><code>/api/trabajadores</code></td><td>Crear trabajador (doctor o enfermero)</td></tr>
@@ -107,7 +62,7 @@
   <tr><td class="s">Trabajadores</td><td class="m DELETE">DELETE</td><td><code>/api/trabajadores/{id}</code></td><td>Eliminar trabajador (también desactiva su usuario)</td></tr>
 </table></div>
 
-<div class="blk"><h3>3.4 HistorialClinicoController</h3>
+<div class="blk"><h3>HistorialClinicoController</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Historial clínico</td><td class="m POST">POST</td><td><code>/api/pacientes/{id}/historial</code></td><td>Crear un registro clínico del paciente (cabecera opcional <code>Idempotency-Key</code> para no duplicarlo)</td></tr>
@@ -115,7 +70,7 @@
   <tr><td class="s">Historial clínico</td><td class="m GET">GET</td><td><code>/api/historial</code></td><td>Listar el historial general (<code>?filtro=paciente|autor&amp;q=</code>)</td></tr>
 </table></div>
 
-<div class="blk"><h3>3.5 UsuarioController</h3>
+<div class="blk"><h3>UsuarioController</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Usuarios</td><td class="m POST">POST</td><td><code>/api/usuarios</code></td><td>Crear usuario</td></tr>
@@ -127,8 +82,7 @@
   <tr><td class="s">Usuarios</td><td class="m PATCH">PATCH</td><td><code>/api/usuarios/{id}/password</code></td><td>Restablecer la contraseña de un usuario</td></tr>
 </table></div>
 
-<div class="blk"><h3>3.6 MedicamentoController (puerta de entrada a MedicamentosService)</h3>
-<p class="meta">Estos endpoints validan el token y el rol del usuario y reenvían la petición a MedicamentosService con <code>MedicamentosClient</code>.</p>
+<div class="blk"><h3>MedicamentoController (PachocloSystem)</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">Medicamentos</td><td class="m POST">POST</td><td><code>/api/medicamentos</code></td><td>Crear medicamento</td></tr>
@@ -143,9 +97,7 @@
   <tr><td class="s">Medicamentos</td><td class="m GET">GET</td><td><code>/api/medicamentos/vencidos</code></td><td>Listar medicamentos vencidos</td></tr>
 </table></div>
 
-<h2>4. Endpoints de MedicamentosService (puerto 8081)</h2>
-<div class="blk"><h3>4.1 MedicamentoController</h3>
-<p class="meta">Solo acepta peticiones de PachocloSystem con la cabecera <code>X-Api-Key</code>.</p>
+<div class="blk"><h3>MedicamentoController (MedicamentosService)</h3>
 <table>
   <tr><th>Microservicio</th><th>Método</th><th>Endpoint</th><th>Descripción</th></tr>
   <tr><td class="s">MedicamentosService</td><td class="m POST">POST</td><td><code>/api/medicamentos</code></td><td>Crear medicamento con su stock inicial</td></tr>
@@ -159,15 +111,6 @@
   <tr><td class="s">MedicamentosService</td><td class="m GET">GET</td><td><code>/api/medicamentos/por-vencer</code></td><td>Listar medicamentos que vencen en los próximos <code>?dias=</code> (30 por defecto)</td></tr>
   <tr><td class="s">MedicamentosService</td><td class="m GET">GET</td><td><code>/api/medicamentos/vencidos</code></td><td>Listar medicamentos vencidos</td></tr>
 </table></div>
-
-<h2>5. Decisiones de diseño</h2>
-<ul>
-  <li><b>Historial clínico sin PUT ni DELETE:</b> un registro clínico es un documento médico y no se modifica ni se borra después de creado, para conservar la trazabilidad.</li>
-  <li><b>Usuarios sin DELETE:</b> los usuarios se desactivan con <code>PATCH /api/usuarios/{id}/desactivar</code> en lugar de borrarse, para conservar la cuenta y poder reactivarla con <code>PATCH /api/usuarios/{id}/activar</code>. El sistema impide desactivar al último administrador activo.</li>
-  <li><b>Baja lógica de pacientes:</b> <code>DELETE /api/pacientes/{id}</code> marca al paciente como inactivo en lugar de borrar la fila, para no perder su historial clínico. Desde ese momento la API lo trata como inexistente (404).</li>
-  <li><b>PATCH para cambios parciales:</b> la habitación del paciente, el rol, el estado y la contraseña de un usuario se cambian con PATCH porque solo modifican un campo; PUT se reserva para editar el recurso completo.</li>
-  <li><b>Entradas y salidas de stock con POST:</b> cada movimiento es una operación nueva sobre el inventario, por eso se crea con POST sobre <code>/{id}/entradas</code> y <code>/{id}/salidas</code>.</li>
-</ul>
 
 </body>
 </html>
