@@ -1,0 +1,63 @@
+<h2 mat-dialog-title>Cambiar rol</h2>
+
+<form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+  <mat-dialog-content>
+    <app-errores-formulario [mensajes]="errores()" />
+
+    <p class="nota">
+      Rol de {{ usuario.username }} ({{ usuario.idUsuario }}). Los permisos del rol nuevo se aplican
+      en su siguiente petición.
+    </p>
+
+    <fieldset class="grupo">
+      <legend id="etiqueta-rol-cambio">Rol</legend>
+      <mat-radio-group formControlName="rol" aria-labelledby="etiqueta-rol-cambio">
+        @for (opcion of roles; track opcion) {
+          <mat-radio-button [value]="opcion">{{ etiquetaRol(opcion) }}</mat-radio-button>
+        }
+      </mat-radio-group>
+      @if (formulario.controls.rol.touched && formulario.controls.rol.invalid) {
+        <mat-error>{{ primerError(formulario.controls.rol) }}</mat-error>
+      }
+    </fieldset>
+
+    @if (rol() === 'DOCTOR' || rol() === 'ENFERMERO') {
+      <app-errores-formulario [mensajes]="erroresCarga()" />
+      @if (erroresCarga().length > 0) {
+        <button
+          class="reintentar"
+          mat-stroked-button
+          type="button"
+          [disabled]="cargandoTrabajadores()"
+          (click)="cargarTrabajadores()"
+        >
+          Reintentar
+        </button>
+      }
+      <mat-form-field class="campo-completo" subscriptSizing="dynamic">
+        <mat-label>Trabajador</mat-label>
+        <mat-select formControlName="idTrabajador" required>
+          <mat-option [value]="''" disabled>
+            {{ cargandoTrabajadores() ? 'Cargando trabajadores…' : 'Seleccione…' }}
+          </mat-option>
+          @for (t of disponibles(); track t.idTrabajador) {
+            <mat-option [value]="t.idTrabajador"
+              >{{ t.nombreCompleto }} ({{ t.idTrabajador }})</mat-option
+            >
+          }
+        </mat-select>
+        @if (!cargandoTrabajadores() && disponibles().length === 0) {
+          <mat-hint>
+            No hay ningún trabajador con rol {{ etiquetaRol(rol()!) }} sin usuario.
+          </mat-hint>
+        }
+        <mat-error>{{ primerError(formulario.controls.idTrabajador) }}</mat-error>
+      </mat-form-field>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close [disabled]="enviando()">Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="enviando()">Cambiar rol</button>
+  </mat-dialog-actions>
+</form>

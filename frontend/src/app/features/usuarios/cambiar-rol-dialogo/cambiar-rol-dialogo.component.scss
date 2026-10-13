@@ -1,0 +1,40 @@
+.grupo {
+  margin: 8px 0 16px;
+  padding: 0;
+  border: none;
+
+  legend {
+    padding: 0;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  mat-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+
+  mat-error {
+    display: block;
+    font: var(--mat-sys-body-small);
+  }
+}
+
+// Con subscriptSizing="dynamic" el subscript crece con el texto; este margen
+// garantiza un hueco mínimo de 8px entre el subscript y el campo siguiente.
+mat-form-field {
+  margin-bottom: 8px;
+}
+
+.nota {
+  margin: 0 0 16px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// La caja de error va pegada a su botón de reintento (el diálogo no se puede
+// usar sin trabajadores, así que aquí sí se ofrece repetir la carga).
+.reintentar {
+  margin-bottom: 16px;
+}

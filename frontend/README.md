@@ -104,17 +104,20 @@ tabla del backend cambia, hay que cambiar `core/permisos.ts` (su test la recorre
 ## Usuarios (solo ADMIN)
 
 `/usuarios`: lista con búsqueda, alta (username, contraseña repetida, rol y, para doctor o
-enfermero, un trabajador de su tipo sin usuario), restablecer contraseña y activar o desactivar.
-`features/usuarios/politica.ts` copia del backend el formato del username y la política de
-contraseña (de 10 caracteres a 72 bytes UTF-8 y distinta del username). Los 400 y 409 se muestran
+enfermero, un trabajador de su tipo sin usuario), cambio de rol, restablecer contraseña y activar o
+desactivar. `features/usuarios/politica.ts` copia del backend el formato del username y la política
+de contraseña (de 10 caracteres a 72 bytes UTF-8 y distinta del username). Los 400 y 409 se muestran
 dentro del formulario o del diálogo de confirmación, incluidos los de desactivarse a uno mismo o
 al último administrador. Si el admin restablece su propia contraseña, el backend invalida su token:
 se le avisa antes y, al guardar, vuelve al login con un mensaje que lo explica.
 
 El alta y el restablecimiento dejan una **contraseña temporal**: el usuario la cambia al entrar
 (ver [Cambio de contraseña](#cambio-de-contraseña)) y la lista lo marca con "Contraseña
-pendiente". El cambio de rol de un usuario (`PATCH /api/usuarios/{id}/rol`) existe en el backend,
-pero esta pantalla aún no lo ofrece.
+pendiente". El cambio de rol (`PATCH /api/usuarios/{id}/rol`) tiene su propio diálogo
+(`features/usuarios/cambiar-rol-dialogo`): llega con el rol y el trabajador actuales precargados y
+ofrece los trabajadores libres del tipo elegido más el que ya tiene ese usuario (conservarlo es
+válido). Sobre el propio admin el botón está deshabilitado, con un tooltip que lo explica: el
+backend responde 409 a ese cambio.
 
 ## Cambio de contraseña
 

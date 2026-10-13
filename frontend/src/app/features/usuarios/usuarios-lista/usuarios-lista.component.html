@@ -64,6 +64,17 @@
           <button
             mat-icon-button
             type="button"
+            disabledInteractive
+            [disabled]="esPropio(u)"
+            [matTooltip]="esPropio(u) ? 'No puede cambiar su propio rol' : 'Cambiar rol'"
+            [attr.aria-label]="'Cambiar rol de ' + u.username"
+            (click)="cambiarRol(u)"
+          >
+            <mat-icon>manage_accounts</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
             matTooltip="Restablecer contraseña"
             [attr.aria-label]="'Restablecer la contraseña de ' + u.username"
             (click)="restablecerPassword(u)"
