@@ -10,7 +10,7 @@ arquitectura MVC y hoy son tres procesos que se hablan por HTTP.
 
 URL: [PachocloSystem](https://pachoclo-system-frontend.vercel.app/)
 
-![Logo](frontend/public/logos/logo-sistema-160.png)
+[![Logo](frontend/public/logos/logo-sistema-160.png)](https://pachoclo-system-frontend.vercel.app/)
 ## Arquitectura
 
 ```
