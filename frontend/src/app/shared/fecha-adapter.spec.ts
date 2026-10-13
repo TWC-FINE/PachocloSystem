@@ -24,18 +24,35 @@ describe('FechaIsoAdapter', () => {
   });
 
   it('rechaza fechas imposibles', () => {
-    expect(adaptador.parse('31/02/2027')).toBeNull();
+    expect(adaptador.parse('31/02/2027')).toBe(adaptador.invalid());
     expect(adaptador.parse('')).toBeNull();
-    expect(adaptador.parse('no es una fecha')).toBeNull();
+    expect(adaptador.parse('no es una fecha')).toBe(adaptador.invalid());
     expect(adaptador.isValid('2027-13-01')).toBe(false);
     expect(adaptador.isValid('2027-00-10')).toBe(false);
     expect(adaptador.isValid('2027-01-32')).toBe(false);
     expect(adaptador.isValid('2027-01-00')).toBe(false);
   });
 
+  it('marca con invalid() el texto tecleado que no es una fecha', () => {
+    expect(adaptador.parse('12321')).toBe(adaptador.invalid());
+    expect(adaptador.parse('12/03')).toBe(adaptador.invalid());
+  });
+
+  it('parse() y deserialize() coinciden con el mismo texto inválido', () => {
+    expect(adaptador.parse('12321')).toBe(adaptador.deserialize('12321'));
+    expect(adaptador.parse('no es una fecha')).toBe(adaptador.deserialize('no es una fecha'));
+  });
+
+  it('parse() deja en null solo lo que está vacío', () => {
+    expect(adaptador.parse('')).toBeNull();
+    expect(adaptador.parse('   ')).toBeNull();
+    expect(adaptador.parse(null)).toBeNull();
+    expect(adaptador.parse(undefined)).toBeNull();
+  });
+
   it('admite el 29 de febrero solo en años bisiestos', () => {
     expect(adaptador.parse('29/02/2028')).toBe('2028-02-29');
-    expect(adaptador.parse('29/02/2027')).toBeNull();
+    expect(adaptador.parse('29/02/2027')).toBe(adaptador.invalid());
     expect(adaptador.isValid('2028-02-29')).toBe(true);
     expect(adaptador.isValid('2027-02-29')).toBe(false);
     // 2100 no es bisiesto (divisible por 100 pero no por 400).
@@ -44,9 +61,9 @@ describe('FechaIsoAdapter', () => {
 
   it('admite el 30 y el 31 solo en los meses que los tienen', () => {
     expect(adaptador.parse('30/04/2027')).toBe('2027-04-30');
-    expect(adaptador.parse('31/04/2027')).toBeNull();
+    expect(adaptador.parse('31/04/2027')).toBe(adaptador.invalid());
     expect(adaptador.parse('31/03/2027')).toBe('2027-03-31');
-    expect(adaptador.parse('31/06/2027')).toBeNull();
+    expect(adaptador.parse('31/06/2027')).toBe(adaptador.invalid());
   });
 
   it('empieza la semana en lunes', () => {
