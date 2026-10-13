@@ -8,7 +8,6 @@
   gap: 8px;
   background-color: var(--mat-sys-primary);
   color: var(--mat-sys-on-primary);
-  // Filo inferior con el cian del logotipo: une la marca con la barra.
   border-bottom: 3px solid var(--marca-acento);
 }
 
@@ -35,21 +34,22 @@
 }
 
 .usuario {
-color: #ffffff;
-font-size: 16px;
-font-weight: 500;
-letter-spacing: 0.2px;
-display: inline-flex;
-align-items: center;
-gap: 6px;
+  // Material pinta el texto del mat-button con este token, no con `color`.
+  --mat-button-text-label-text-color: var(--mat-sys-on-primary);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .usuario mat-icon {
-color: #ffffff;
-font-size: 23px;
-width: 23px;
-height: 23px;
-line-height: 23px;
+  color: var(--mat-sys-on-primary);
+  font-size: 23px;
+  width: 23px;
+  height: 23px;
+  line-height: 23px;
 }
 
 .contenedor {
@@ -67,5 +67,15 @@ line-height: 23px;
 @media (max-width: 599.98px) {
   .contenido {
     padding: 16px;
+  }
+
+  .barra .usuario {
+    min-width: 0;
+    padding: 0 8px;
+    margin-right: -8px;
+  }
+
+  .barra .usuario > mat-icon {
+    margin: 0;
   }
 }
