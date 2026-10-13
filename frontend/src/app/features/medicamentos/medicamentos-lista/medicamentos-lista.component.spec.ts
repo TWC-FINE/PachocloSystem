@@ -271,6 +271,31 @@ describe('MedicamentosListaComponent', () => {
     expect(servicio.listar).toHaveBeenCalledTimes(2);
   });
 
+  // '' es lo que devolvía «Cancelar» con `mat-dialog-close` sin valor.
+  for (const cerrado of [undefined, '']) {
+    it(`cerrar la entrada sin registrar (${JSON.stringify(cerrado)}) no avisa ni recarga`, async () => {
+      alCerrarDialogo(cerrado);
+      const { boton, estable } = await renderizar();
+
+      boton('Entrada de stock de Amoxil 250 mg/5 ml').click();
+      await estable();
+
+      expect(notificaciones.exito).not.toHaveBeenCalled();
+      expect(servicio.listar).toHaveBeenCalledTimes(1);
+    });
+
+    it(`cerrar la edición sin guardar (${JSON.stringify(cerrado)}) no avisa ni recarga`, async () => {
+      alCerrarDialogo(cerrado);
+      const { boton, estable } = await renderizar();
+
+      boton('Editar Amoxil 250 mg/5 ml').click();
+      await estable();
+
+      expect(notificaciones.exito).not.toHaveBeenCalled();
+      expect(servicio.listar).toHaveBeenCalledTimes(1);
+    });
+  }
+
   it('al eliminar, un 404 se muestra como mensaje y la lista se recarga', async () => {
     servicio.eliminar.mockReturnValue(
       throwError(() => new ApiError(404, ['No se encontró el medicamento MED-0001.'])),

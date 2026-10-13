@@ -121,7 +121,12 @@ export class TrabajadoresListaComponent {
         { data: datos, width: '480px', maxWidth: '95vw' },
       )
       .afterClosed()
-      .pipe(filter((guardado): guardado is Trabajador => guardado !== undefined))
+      // Solo un trabajador cuenta: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (guardado): guardado is Trabajador => typeof guardado === 'object' && guardado !== null,
+        ),
+      )
       .subscribe((guardado) => {
         this.notificaciones.exito(mensajeExito(guardado));
         this.recargar();

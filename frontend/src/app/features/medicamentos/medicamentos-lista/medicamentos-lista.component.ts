@@ -195,7 +195,13 @@ export class MedicamentosListaComponent {
         { data: { medicamento, tipo }, width: '440px', maxWidth: '95vw' },
       )
       .afterClosed()
-      .pipe(filter((resultado) => resultado !== undefined))
+      // Solo un medicamento o SIN_CONFIRMAR cuentan: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (resultado): resultado is ResultadoMovimientoDialogo =>
+            resultado === SIN_CONFIRMAR || (typeof resultado === 'object' && resultado !== null),
+        ),
+      )
       .subscribe((resultado) => {
         // Sin confirmar, el diálogo ya avisó; se recarga para ver el stock real.
         if (resultado !== SIN_CONFIRMAR) {
@@ -267,7 +273,12 @@ export class MedicamentosListaComponent {
     this.dialogo
       .open<C, D, Medicamento>(componente, { data: datos, width: ancho, maxWidth: '95vw' })
       .afterClosed()
-      .pipe(filter((guardado): guardado is Medicamento => guardado !== undefined))
+      // Solo un medicamento cuenta: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (guardado): guardado is Medicamento => typeof guardado === 'object' && guardado !== null,
+        ),
+      )
       .subscribe((guardado) => {
         this.notificaciones.exito(mensajeExito(guardado));
         this.recargar();

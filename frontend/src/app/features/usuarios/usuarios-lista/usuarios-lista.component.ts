@@ -82,7 +82,8 @@ export class UsuariosListaComponent {
         maxWidth: '95vw',
       })
       .afterClosed()
-      .pipe(filter((creado): creado is Usuario => creado !== undefined))
+      // Solo un usuario cuenta: cerrar sin guardar no avisa nada.
+      .pipe(filter((creado): creado is Usuario => typeof creado === 'object' && creado !== null))
       .subscribe((creado) => {
         this.notificaciones.exito(`Usuario ${creado.username} creado.`);
         this.recargar();
@@ -109,7 +110,13 @@ export class UsuariosListaComponent {
         },
       )
       .afterClosed()
-      .pipe(filter((actualizado): actualizado is Usuario => actualizado !== undefined))
+      // Solo un usuario cuenta: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (actualizado): actualizado is Usuario =>
+            typeof actualizado === 'object' && actualizado !== null,
+        ),
+      )
       .subscribe((actualizado) => {
         this.notificaciones.exito(`Rol de ${actualizado.username} actualizado.`);
         this.recargar();

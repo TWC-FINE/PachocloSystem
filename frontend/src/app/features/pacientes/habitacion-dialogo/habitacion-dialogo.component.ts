@@ -50,7 +50,9 @@ export interface DatosHabitacionDialogo {
         </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close [disabled]="enviando()">Cancelar</button>
+        <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="enviando()">
+          Cancelar
+        </button>
         <button mat-flat-button type="submit" [disabled]="enviando()">Cambiar</button>
       </mat-dialog-actions>
     </form>

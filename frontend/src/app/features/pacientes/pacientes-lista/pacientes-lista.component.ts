@@ -120,7 +120,12 @@ export class PacientesListaComponent {
     this.dialogo
       .open<C, D, Paciente>(componente, { data: datos, width: '480px', maxWidth: '95vw' })
       .afterClosed()
-      .pipe(filter((guardado): guardado is Paciente => guardado !== undefined))
+      // Solo un paciente cuenta: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (guardado): guardado is Paciente => typeof guardado === 'object' && guardado !== null,
+        ),
+      )
       .subscribe((guardado) => {
         this.notificaciones.exito(mensajeExito(guardado));
         this.recargar();

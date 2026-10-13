@@ -92,7 +92,7 @@ const AVISO_CANCELADO =
             Reintentar
           </button>
         } @else {
-          <button mat-button type="button" mat-dialog-close [disabled]="enviando()">
+          <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="enviando()">
             Cancelar
           </button>
           <button mat-flat-button type="submit" [disabled]="enviando()">

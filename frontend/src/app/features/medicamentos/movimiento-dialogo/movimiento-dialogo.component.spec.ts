@@ -130,6 +130,15 @@ describe('MovimientoDialogoComponent', () => {
     expect(clavesGeneradas).toBe(2);
   });
 
+  it('Cancelar cierra sin resultado, igual que Esc o un clic fuera', async () => {
+    const { pulsar } = await renderizar('entrada');
+
+    await pulsar('Cancelar');
+
+    expect(servicio.moverStock).not.toHaveBeenCalled();
+    expect(dialogo.close).toHaveBeenCalledWith(undefined);
+  });
+
   it.each(['0', '1000001', '2.5'])('rechaza en local la cantidad %s', async (cantidad) => {
     const { elemento, registrar } = await renderizar('salida');
 

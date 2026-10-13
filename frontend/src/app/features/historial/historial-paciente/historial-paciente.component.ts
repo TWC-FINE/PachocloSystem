@@ -144,7 +144,13 @@ export class HistorialPacienteComponent {
         { data: { paciente, autor }, width: '640px', maxWidth: '95vw' },
       )
       .afterClosed()
-      .pipe(filter((resultado) => resultado !== undefined))
+      // Solo un registro o SIN_CONFIRMAR cuentan: cerrar sin guardar no avisa nada.
+      .pipe(
+        filter(
+          (resultado): resultado is ResultadoRegistroDialogo =>
+            resultado === SIN_CONFIRMAR || (typeof resultado === 'object' && resultado !== null),
+        ),
+      )
       .subscribe((resultado) => {
         // Sin confirmar, el diálogo ya avisó; se recarga para ver si el registro llegó a crearse.
         if (resultado !== SIN_CONFIRMAR) {
