@@ -9,6 +9,7 @@ arquitectura MVC y hoy son tres procesos que se hablan por HTTP.
 > [Limitaciones conocidas](#limitaciones-conocidas)).
 
 URL: [PachocloSystem](https://pachoclo-system-frontend.vercel.app/)
+
 ![Logo](frontend/public/logos/logo-sistema-160.png)
 ## Arquitectura
 
