@@ -63,8 +63,10 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/rol")
-    public UsuarioResponse cambiarRol(@PathVariable String id, @RequestBody CambiarRolRequest request) {
-        return respuestaDe(servicio.cambiarRol(id, rolDe(request.rol()), request.idTrabajador()));
+    public UsuarioResponse cambiarRol(@PathVariable String id, @RequestBody CambiarRolRequest request,
+                                      Authentication autenticacion) {
+        return respuestaDe(servicio.cambiarRol(id, rolDe(request.rol()), request.idTrabajador(),
+                autenticacion.getName()));
     }
 
     @PatchMapping("/{id}/desactivar")

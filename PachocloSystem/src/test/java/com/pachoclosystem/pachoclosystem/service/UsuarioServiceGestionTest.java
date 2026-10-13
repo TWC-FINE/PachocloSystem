@@ -27,6 +27,9 @@ class UsuarioServiceGestionTest {
 
     private static final String PASSWORD_VALIDA = "clave-de-pruebas-10";
 
+    /** Solicitante ficticio de los cambios de rol: nunca es el usuario destino. */
+    private static final String SOLICITANTE = "admin.solicitante";
+
     private UsuarioRepositoryEnMemoria repositorio;
     private TrabajadorService trabajadorService;
     private PasswordEncoder encoder;
@@ -70,7 +73,8 @@ class UsuarioServiceGestionTest {
         Usuario usuario = servicio.crearUsuario("carlos.mena", PASSWORD_VALIDA, Rol.DOCTOR,
                 doctor.getIdTrabajador());
 
-        servicio.cambiarRol(usuario.getIdUsuario(), Rol.ENFERMERO, enfermero.getIdTrabajador());
+        servicio.cambiarRol(usuario.getIdUsuario(), Rol.ENFERMERO, enfermero.getIdTrabajador(),
+                SOLICITANTE);
 
         assertThat(usuario.getRol()).isEqualTo(Rol.ENFERMERO);
         assertThat(usuario.getIdTrabajador()).isEqualTo(enfermero.getIdTrabajador());
@@ -87,7 +91,7 @@ class UsuarioServiceGestionTest {
 
         assertThatExceptionOfType(SolicitudInvalidaException.class)
                 .isThrownBy(() -> servicio.cambiarRol(usuario.getIdUsuario(), Rol.ADMIN,
-                        doctor.getIdTrabajador()))
+                        doctor.getIdTrabajador(), SOLICITANTE))
                 .withMessage("El usuario administrador no puede estar vinculado a un trabajador.");
     }
 
@@ -99,16 +103,18 @@ class UsuarioServiceGestionTest {
                 "Carlos Mena", "Doctor", "Cardiologia", null);
 
         assertThatExceptionOfType(SolicitudInvalidaException.class)
-                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR, null))
+                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR, null,
+                        SOLICITANTE))
                 .withMessage("El usuario con rol DOCTOR debe estar vinculado a un trabajador.");
 
         assertThatExceptionOfType(NotFoundException.class)
-                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR, "DOC-9999"))
+                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR, "DOC-9999",
+                        SOLICITANTE))
                 .withMessage("No se encontró el trabajador DOC-9999.");
 
         assertThatExceptionOfType(SolicitudInvalidaException.class)
                 .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.ENFERMERO,
-                        doctor.getIdTrabajador()))
+                        doctor.getIdTrabajador(), SOLICITANTE))
                 .withMessage("El trabajador DOC-0001 no es un Enfermero.");
         assertThat(admin.getRol()).isEqualTo(Rol.ADMIN);
     }
@@ -125,14 +131,14 @@ class UsuarioServiceGestionTest {
 
         assertThatExceptionOfType(ConflictoException.class)
                 .isThrownBy(() -> servicio.cambiarRol(segundo.getIdUsuario(), Rol.DOCTOR,
-                        doctor.getIdTrabajador()))
+                        doctor.getIdTrabajador(), SOLICITANTE))
                 .withMessage("El trabajador DOC-0001 ya tiene un usuario.");
     }
 
     @Test
     void cambiarRolDeUsuarioInexistenteLanzaNotFound() {
         assertThatExceptionOfType(NotFoundException.class)
-                .isThrownBy(() -> servicio.cambiarRol("USR-9999", Rol.ADMIN, null))
+                .isThrownBy(() -> servicio.cambiarRol("USR-9999", Rol.ADMIN, null, SOLICITANTE))
                 .withMessage("No se encontró el usuario USR-9999.");
     }
 
@@ -142,11 +148,39 @@ class UsuarioServiceGestionTest {
         Doctor doctor = (Doctor) trabajadorService.registrarTrabajador(
                 "Carlos Mena", "Doctor", "Cardiologia", null);
 
+        // Por la API este caso no se alcanza: quien pide es un ADMIN activo, así
+        // que el único administrador activo sería él mismo y lo atrapa antes la
+        // regla del propio rol; la guarda se conserva como defensa del servicio.
         assertThatExceptionOfType(ConflictoException.class)
                 .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR,
-                        doctor.getIdTrabajador()))
+                        doctor.getIdTrabajador(), SOLICITANTE))
                 .withMessage("No se puede quitar el rol ADMIN al último administrador activo.");
         assertThat(admin.getRol()).isEqualTo(Rol.ADMIN);
+        assertThat(repositorio.buscarPorIdTrabajador(doctor.getIdTrabajador())).isNull();
+    }
+
+    @Test
+    void noSePuedeCambiarElPropioRol() {
+        Usuario admin = servicio.crearUsuario("admin.uno", PASSWORD_VALIDA, Rol.ADMIN, null);
+        // Con otro administrador activo: lo que rechaza no es la regla del último.
+        servicio.crearUsuario("admin.dos", PASSWORD_VALIDA, Rol.ADMIN, null);
+        Doctor doctor = (Doctor) trabajadorService.registrarTrabajador(
+                "Carlos Mena", "Doctor", "Cardiologia", null);
+
+        assertThatExceptionOfType(ConflictoException.class)
+                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR,
+                        doctor.getIdTrabajador(), admin.getUsername()))
+                .withMessage("No puede cambiar su propio rol.");
+
+        // La regla del propio rol se aplica antes de validar el trabajador: con un
+        // trabajador inexistente también es 409 (y no el 404 de la validación).
+        assertThatExceptionOfType(ConflictoException.class)
+                .isThrownBy(() -> servicio.cambiarRol(admin.getIdUsuario(), Rol.DOCTOR,
+                        "DOC-9999", admin.getUsername()))
+                .withMessage("No puede cambiar su propio rol.");
+
+        assertThat(admin.getRol()).isEqualTo(Rol.ADMIN);
+        assertThat(admin.getIdTrabajador()).isNull();
         assertThat(repositorio.buscarPorIdTrabajador(doctor.getIdTrabajador())).isNull();
     }
 

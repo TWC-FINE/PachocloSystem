@@ -517,9 +517,9 @@ curl -X POST http://localhost:8080/api/usuarios   -H "Authorization: Bearer <tok
   entonces, el resto de la API le responde `403` (ver
   [Permisos por rol](#permisos-por-rol)).
 - **Cambio de rol:** mismas reglas de vínculo que el alta; libera el trabajador
-  anterior. `409` si el trabajador nuevo ya tiene usuario o si se quitaría el
-  rol ADMIN al último administrador activo. Se aplica en la siguiente petición
-  (los permisos se releen siempre).
+  anterior. `409` si el solicitante se cambia su propio rol, si el trabajador
+  nuevo ya tiene usuario o si se quitaría el rol ADMIN al último administrador
+  activo. Se aplica en la siguiente petición (los permisos se releen siempre).
 - **Desactivar:** el usuario pierde el acceso de inmediato y sus tokens quedan
   revocados. `409` si un admin intenta desactivarse a sí mismo o desactivar al
   último administrador activo. Eliminar un trabajador sigue desactivando su

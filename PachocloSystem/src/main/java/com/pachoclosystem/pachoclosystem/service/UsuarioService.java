@@ -223,13 +223,22 @@ public class UsuarioService {
     /**
      * Cambia el rol y el trabajador vinculado, con las mismas reglas de vínculo
      * que el alta (400 si son incoherentes, 404 si el trabajador no existe).
-     * 409 si el trabajador ya es de otro usuario o si se degradaría al último
-     * administrador activo. Los permisos se releen en cada petición, así que el
-     * cambio se aplica de inmediato sin revocar los tokens.
+     * 409 si el solicitante se cambia su propio rol, si el trabajador ya es de
+     * otro usuario o si se degradaría al último administrador activo. Los
+     * permisos se releen en cada petición, así que el cambio se aplica de
+     * inmediato sin revocar los tokens.
      */
     @Transactional
-    public Usuario cambiarRol(String idUsuario, Rol nuevoRol, String idTrabajador) {
+    public Usuario cambiarRol(String idUsuario, Rol nuevoRol, String idTrabajador,
+                              String usernameSolicitante) {
         String trabajador = normalizarTrabajador(idTrabajador);
+        // El cambio sobre uno mismo se descarta antes de serializar: no puede
+        // dejar el sistema sin administradores, así que no toma el bloqueo (misma
+        // regla que desactivar, pero sin necesidad de esperarlo).
+        Usuario previo = obtener(idUsuario);
+        if (previo.getUsername().equals(Usuario.normalizarUsername(usernameSolicitante))) {
+            throw new ConflictoException("No puede cambiar su propio rol.");
+        }
         repositorio.bloquearAdministracion();
         Usuario usuario = obtenerParaActualizar(idUsuario);
         List<String> errores = validarVinculo(nuevoRol, trabajador);
@@ -239,6 +248,10 @@ public class UsuarioService {
         if (nuevoRol != Rol.ADMIN) {
             validarTrabajador(nuevoRol, trabajador, idUsuario);
         }
+        // Guarda del último administrador activo, conservada como defensa del
+        // servicio: hoy es inalcanzable por la API (quien pide es un ADMIN activo,
+        // así que el único admin activo sería el propio solicitante y salta antes
+        // la regla del propio rol).
         if (usuario.getRol() == Rol.ADMIN && nuevoRol != Rol.ADMIN && usuario.isActivo()
                 && repositorio.contarAdministradoresActivos() <= 1) {
             throw new ConflictoException("No se puede quitar el rol ADMIN al último administrador activo.");
