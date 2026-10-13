@@ -31,6 +31,13 @@ export interface Usuario {
   username: string;
   rol: Rol;
   idTrabajador: string | null;
+  /**
+   * Nombre completo del trabajador vinculado (el que firma sus registros), o
+   * `null` si no tiene (el administrador) o si su trabajador ya no existe.
+   * Opcional porque las sesiones guardadas antes de que el backend lo enviara
+   * no lo traen: trátalo como texto ausente, nunca como el texto «null».
+   */
+  nombreCompleto?: string | null;
   activo: boolean;
   debeCambiarPassword: boolean;
 }

@@ -9,7 +9,11 @@ import { Medicamento } from '../../medicamentos/medicamento.models';
 import { MedicamentoService } from '../../medicamentos/medicamento.service';
 import { Registro, RegistroRequest } from '../historial.models';
 import { HistorialService } from '../historial.service';
-import { DatosRegistroDialogo, RegistroDialogoComponent } from './registro-dialogo.component';
+import {
+  AutorNuevoRegistro,
+  DatosRegistroDialogo,
+  RegistroDialogoComponent,
+} from './registro-dialogo.component';
 
 /** Si el rol simulado puede crear diagnósticos (el enfermero no). */
 let diagnostica = true;
@@ -30,7 +34,7 @@ function formularioDe(fixture: ComponentFixture<RegistroDialogoComponent>): Form
 describe('RegistroDialogoComponent', () => {
   const datos: DatosRegistroDialogo = {
     paciente: { idPaciente: 'PAC-0001', nombre: 'Ana Ruiz', edad: 40, habitacion: 12 },
-    autor: 'DOC-0001',
+    autor: { idTrabajador: 'DOC-0001', nombreCompleto: 'Eva Mora' },
   };
   const creado = { idRegistro: 'r1' } as Registro;
   const servicio = {
@@ -103,6 +107,22 @@ describe('RegistroDialogoComponent', () => {
     vi.resetAllMocks();
     simularClaves();
     diagnostica = true;
+  });
+
+  it.each<[string, AutorNuevoRegistro, string]>([
+    ['con nombre', { idTrabajador: 'DOC-0001', nombreCompleto: 'Eva Mora' }, 'Eva Mora (DOC-0001)'],
+    ['sin nombre (null)', { idTrabajador: 'DOC-0001', nombreCompleto: null }, 'DOC-0001'],
+    ['sin nombre (cadena vacía)', { idTrabajador: 'DOC-0001', nombreCompleto: '' }, 'DOC-0001'],
+    ['sin el campo', { idTrabajador: 'DOC-0001' }, 'DOC-0001'],
+  ])('muestra el autor %s', async (_caso, autor, esperado) => {
+    datos.autor = autor;
+
+    const { elemento } = await renderizar();
+
+    const contexto = elemento.querySelector('.contexto')!.textContent!;
+    expect(contexto).toContain(`Autor: ${esperado}`);
+    // Ni «null», ni «undefined», ni unos paréntesis vacíos.
+    expect(contexto).not.toMatch(/null|undefined|\(\)/);
   });
 
   it('a quien no puede diagnosticar (enfermero) no se le ofrece el tipo DIAGNOSTICO', async () => {
@@ -436,7 +456,7 @@ describe('RegistroDialogoComponent', () => {
 describe('RegistroDialogoComponent · medicación', () => {
   const datos: DatosRegistroDialogo = {
     paciente: { idPaciente: 'PAC-0001', nombre: 'Ana Ruiz', edad: 40, habitacion: 12 },
-    autor: 'DOC-0001',
+    autor: { idTrabajador: 'DOC-0001', nombreCompleto: 'Eva Mora' },
   };
   const creado = { idRegistro: 'r1' } as Registro;
   const servicio = {

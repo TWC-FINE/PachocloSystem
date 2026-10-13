@@ -3,8 +3,7 @@
 <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
   <mat-dialog-content>
     <p class="contexto">
-      Paciente: {{ datos.paciente.nombre }} ({{ datos.paciente.idPaciente }}) · Autor:
-      {{ datos.autor }}
+      Paciente: {{ datos.paciente.nombre }} ({{ datos.paciente.idPaciente }}) · Autor: {{ autor() }}
     </p>
 
     <app-errores-formulario [mensajes]="errores()" />

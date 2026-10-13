@@ -1,6 +1,9 @@
 .contexto {
   margin: 0 0 16px;
   color: var(--mat-sys-on-surface-variant);
+  // Un nombre completo sin espacios (o un ID muy largo) se parte en vez de
+  // desbordar el diálogo en horizontal.
+  overflow-wrap: anywhere;
 }
 
 .grupo {

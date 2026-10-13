@@ -17,6 +17,7 @@ import { Paciente } from '../../pacientes/paciente.models';
 import { PacienteService } from '../../pacientes/paciente.service';
 import { HistorialService } from '../historial.service';
 import {
+  AutorNuevoRegistro,
   DatosRegistroDialogo,
   RegistroDialogoComponent,
   ResultadoRegistroDialogo,
@@ -97,8 +98,21 @@ export class HistorialPacienteComponent {
   protected readonly errores = this.lista.errores;
   protected readonly filtro = computed(() => this.lista.consulta().texto);
 
-  /** Trabajador del usuario actual, que firma los registros; `null` si no tiene. */
-  protected readonly idAutor = computed(() => this.usuario()?.idTrabajador ?? null);
+  /**
+   * Trabajador del usuario actual, que firma los registros y se muestra al
+   * crearlos; `null` si no tiene (el administrador).
+   */
+  protected readonly autor = computed<AutorNuevoRegistro | null>(() => {
+    const usuario = this.usuario();
+    if (usuario?.idTrabajador == null) {
+      return null;
+    }
+    return {
+      idTrabajador: usuario.idTrabajador,
+      // Una sesión guardada antes de que el backend enviara el nombre no lo trae.
+      nombreCompleto: usuario.nombreCompleto ?? null,
+    };
+  });
   /** Por qué no se pueden crear registros, o `null` si se puede. */
   protected readonly motivoSoloConsulta = computed(() => {
     const usuario = this.usuario();
@@ -120,14 +134,14 @@ export class HistorialPacienteComponent {
   }
 
   protected nuevo(paciente: Paciente): void {
-    const idAutor = this.idAutor();
-    if (idAutor === null) {
+    const autor = this.autor();
+    if (autor === null) {
       return;
     }
     this.dialogo
       .open<RegistroDialogoComponent, DatosRegistroDialogo, ResultadoRegistroDialogo>(
         RegistroDialogoComponent,
-        { data: { paciente, autor: idAutor }, width: '640px', maxWidth: '95vw' },
+        { data: { paciente, autor }, width: '640px', maxWidth: '95vw' },
       )
       .afterClosed()
       .pipe(filter((resultado) => resultado !== undefined))
