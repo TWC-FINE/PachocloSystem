@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatFormField } from '@angular/material/form-field';
+import { By } from '@angular/platform-browser';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
 import { NotificacionService } from '../../../core/notificacion.service';
@@ -227,6 +229,18 @@ describe('RegistroDialogoComponent', () => {
 
     expect(contenidoEnError()).toBe(false);
     expect(formularioDe(fixture).get('contenido')!.touched).toBe(false);
+  });
+
+  it('el campo de contenido no reserva el hueco de su aviso (subscriptSizing dinámico)', async () => {
+    const { fixture, elegirTipo } = await renderizar();
+
+    await elegirTipo('Evolución');
+
+    const campo = fixture.debugElement
+      .queryAll(By.directive(MatFormField))
+      .find((candidato) => candidato.query(By.css('[formControlName="contenido"]')));
+
+    expect(campo!.injector.get(MatFormField).subscriptSizing).toBe('dynamic');
   });
 
   it('crea un diagnóstico con el autor del usuario y el contenido recortado', async () => {
