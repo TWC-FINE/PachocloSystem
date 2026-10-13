@@ -15,8 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Reglas de negocio de los usuarios.
@@ -137,6 +140,33 @@ public class UsuarioService {
                 .toList();
     }
 
+    /**
+     * Nombre completo del trabajador vinculado al usuario, o {@code null} si no
+     * tiene (el ADMIN) o si su trabajador ya no existe.
+     */
+    public String nombreDelTrabajador(Usuario usuario) {
+        return nombresDeTrabajadores(List.of(usuario)).get(usuario.getIdUsuario());
+    }
+
+    /**
+     * Nombre completo del trabajador de cada usuario, indexado por
+     * {@code idUsuario} ({@code null} para quien no tiene), en
+     * <strong>una sola</strong> lectura de trabajadores
+     * ({@link TrabajadorService#nombresPorId(Collection)}): listar usuarios no
+     * hace una consulta por usuario (N+1). La clave es el usuario y no el
+     * trabajador porque el ADMIN no tiene trabajador.
+     */
+    public Map<String, String> nombresDeTrabajadores(Collection<Usuario> usuarios) {
+        Map<String, String> porTrabajador =
+                trabajadorService.nombresPorId(usuarios.stream().map(Usuario::getIdTrabajador).toList());
+        Map<String, String> nombres = new HashMap<>();
+        for (Usuario usuario : usuarios) {
+            nombres.put(usuario.getIdUsuario(),
+                    usuario.getIdTrabajador() == null ? null : porTrabajador.get(usuario.getIdTrabajador()));
+        }
+        return nombres;
+    }
+
     /** Devuelve el usuario; si no existe lanza {@link NotFoundException}. */
     public Usuario obtener(String idUsuario) {
         Usuario usuario = repositorio.buscarPorId(idUsuario);
@@ -193,13 +223,22 @@ public class UsuarioService {
     /**
      * Cambia el rol y el trabajador vinculado, con las mismas reglas de vínculo
      * que el alta (400 si son incoherentes, 404 si el trabajador no existe).
-     * 409 si el trabajador ya es de otro usuario o si se degradaría al último
-     * administrador activo. Los permisos se releen en cada petición, así que el
-     * cambio se aplica de inmediato sin revocar los tokens.
+     * 409 si el solicitante se cambia su propio rol, si el trabajador ya es de
+     * otro usuario o si se degradaría al último administrador activo. Los
+     * permisos se releen en cada petición, así que el cambio se aplica de
+     * inmediato sin revocar los tokens.
      */
     @Transactional
-    public Usuario cambiarRol(String idUsuario, Rol nuevoRol, String idTrabajador) {
+    public Usuario cambiarRol(String idUsuario, Rol nuevoRol, String idTrabajador,
+                              String usernameSolicitante) {
         String trabajador = normalizarTrabajador(idTrabajador);
+        // El cambio sobre uno mismo se descarta antes de serializar: no puede
+        // dejar el sistema sin administradores, así que no toma el bloqueo (misma
+        // regla que desactivar, pero sin necesidad de esperarlo).
+        Usuario previo = obtener(idUsuario);
+        if (previo.getUsername().equals(Usuario.normalizarUsername(usernameSolicitante))) {
+            throw new ConflictoException("No puede cambiar su propio rol.");
+        }
         repositorio.bloquearAdministracion();
         Usuario usuario = obtenerParaActualizar(idUsuario);
         List<String> errores = validarVinculo(nuevoRol, trabajador);
@@ -209,6 +248,10 @@ public class UsuarioService {
         if (nuevoRol != Rol.ADMIN) {
             validarTrabajador(nuevoRol, trabajador, idUsuario);
         }
+        // Guarda del último administrador activo, conservada como defensa del
+        // servicio: hoy es inalcanzable por la API (quien pide es un ADMIN activo,
+        // así que el único admin activo sería el propio solicitante y salta antes
+        // la regla del propio rol).
         if (usuario.getRol() == Rol.ADMIN && nuevoRol != Rol.ADMIN && usuario.isActivo()
                 && repositorio.contarAdministradoresActivos() <= 1) {
             throw new ConflictoException("No se puede quitar el rol ADMIN al último administrador activo.");

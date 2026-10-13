@@ -2,8 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, of } from 'rxjs';
 import { Usuario } from '../../../core/auth/auth.models';
+import { AuthService } from '../../../core/auth/auth.service';
 import { NotificacionService } from '../../../core/notificacion.service';
 import { ConfirmacionDialogoComponent } from '../../../shared/confirmacion-dialogo/confirmacion-dialogo.component';
+import { CambiarRolDialogoComponent } from '../cambiar-rol-dialogo/cambiar-rol-dialogo.component';
 import { PasswordDialogoComponent } from '../password-dialogo/password-dialogo.component';
 import { UsuarioDialogoComponent } from '../usuario-dialogo/usuario-dialogo.component';
 import { UsuarioService } from '../usuario.service';
@@ -33,6 +35,8 @@ describe('UsuariosListaComponent', () => {
   };
   const dialogo = { open: vi.fn() };
   const notificaciones = { exito: vi.fn(), error: vi.fn() };
+  /** Sesión abierta: el admin de la lista (su fila no ofrece cambiar el rol). */
+  const auth = { usuario: () => admin };
   const alCerrarDialogo = (resultado: unknown) =>
     dialogo.open.mockReturnValueOnce({ afterClosed: () => of(resultado) });
 
@@ -43,6 +47,7 @@ describe('UsuariosListaComponent', () => {
         { provide: UsuarioService, useValue: servicio },
         { provide: MatDialog, useValue: dialogo },
         { provide: NotificacionService, useValue: notificaciones },
+        { provide: AuthService, useValue: auth },
       ],
     });
     const fixture = TestBed.createComponent(UsuariosListaComponent);
@@ -120,6 +125,44 @@ describe('UsuariosListaComponent', () => {
     dialogo.open.mock.calls[0][1].data.ejecutar().subscribe();
     expect(servicio.activar).toHaveBeenCalledWith('USR-0002');
     expect(notificaciones.exito).toHaveBeenCalledWith('Usuario eva.mora activado.');
+  });
+
+  it('abre el cambio de rol de la fila en su diálogo', async () => {
+    alCerrarDialogo({ ...eva, rol: 'ENFERMERO', idTrabajador: 'ENF-0001' });
+    const { fixture, boton } = await renderizar();
+
+    boton('Cambiar rol de eva.mora')!.click();
+    await fixture.whenStable();
+
+    expect(dialogo.open.mock.calls[0][0]).toBe(CambiarRolDialogoComponent);
+    expect(dialogo.open.mock.calls[0][1].data).toEqual({ usuario: eva });
+  });
+
+  it('al cambiar el rol notifica y recarga', async () => {
+    alCerrarDialogo({ ...eva, rol: 'ENFERMERO', idTrabajador: 'ENF-0001' });
+    const { fixture, boton } = await renderizar();
+
+    boton('Cambiar rol de eva.mora')!.click();
+    await fixture.whenStable();
+
+    expect(notificaciones.exito).toHaveBeenCalledWith('Rol de eva.mora actualizado.');
+    expect(servicio.listar).toHaveBeenCalledTimes(2);
+  });
+
+  it('sobre el propio usuario el botón está deshabilitado y no abre nada', async () => {
+    const { fixture, boton } = await renderizar();
+
+    const propio = boton('Cambiar rol de admin')!;
+    expect(propio.getAttribute('aria-disabled')).toBe('true');
+    expect(propio.classList).toContain('mat-mdc-button-disabled');
+    expect(boton('Cambiar rol de eva.mora')!.getAttribute('aria-disabled')).toBeNull();
+
+    // El tooltip necesita que el botón reciba el puntero (`disabledInteractive`),
+    // así que el clic llega al componente: no debe hacer nada.
+    propio.click();
+    await fixture.whenStable();
+
+    expect(dialogo.open).not.toHaveBeenCalled();
   });
 
   it('abre el alta y el restablecimiento de contraseña', async () => {

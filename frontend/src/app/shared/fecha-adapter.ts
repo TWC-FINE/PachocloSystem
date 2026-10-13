@@ -178,8 +178,18 @@ export class FechaIsoAdapter extends DateAdapter<string> {
     return this.createDate(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
   }
 
+  /**
+   * Lo llama el `mat-datepicker` con el texto que se teclea. Vacío → `null`
+   * (campo sin rellenar, como `deserialize`); texto que no es una fecha real →
+   * `invalid()`, para que el datepicker marque el error de formato
+   * (`matDatepickerParse`). Con `null` lo tomaría por un campo vacío y no
+   * avisaría de nada.
+   */
   parse(valor: unknown): string | null {
-    return this._normalizar(valor);
+    if (valor == null || String(valor).trim() === '') {
+      return null;
+    }
+    return this._normalizar(valor) ?? this.invalid();
   }
 
   format(fecha: string, formato: unknown): string {

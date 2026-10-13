@@ -218,4 +218,73 @@ describe('MedicamentoDialogoComponent', () => {
     );
     expect(dialogo.close).not.toHaveBeenCalled();
   });
+
+  it('avisa del formato cuando la fecha es un día imposible', async () => {
+    const { rellenar, enviar, erroresCampos } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '31/02/2027' });
+    await enviar();
+
+    expect(erroresCampos()).toEqual(['La fecha no es válida (use dd/mm/aaaa).']);
+    expect(servicio.registrar).not.toHaveBeenCalled();
+  });
+
+  it('con la fecha a medias no envía nada', async () => {
+    const { elemento, rellenar, enviar, erroresCampos } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '12/03' });
+    await enviar();
+
+    expect(
+      elemento.querySelector<HTMLInputElement>('[formControlName="fechaVencimiento"]')!.value,
+    ).toBe('12/03');
+    expect(erroresCampos()).toEqual(['La fecha no es válida (use dd/mm/aaaa).']);
+    expect(servicio.registrar).not.toHaveBeenCalled();
+  });
+
+  it('teclear "12321" se enmascara y nunca llega al backend', async () => {
+    const { campo, rellenar, enviar, erroresCampos } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '12321' });
+
+    // La máscara agrupa los dígitos: el campo no muestra el texto crudo.
+    expect((campo('fechaVencimiento') as HTMLInputElement).value).toBe('12/32/1');
+
+    await enviar();
+
+    expect(erroresCampos()).toEqual(['La fecha no es válida (use dd/mm/aaaa).']);
+    expect(servicio.registrar).not.toHaveBeenCalled();
+  });
+
+  it('sin fecha sigue diciendo que es obligatoria', async () => {
+    const { rellenar, enviar, erroresCampos } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '' });
+    await enviar();
+
+    expect(erroresCampos()).toEqual(['La fecha de vencimiento es obligatoria.']);
+  });
+
+  it('con 12/03/2027 el formulario es válido y el calendario abre en marzo de 2027', async () => {
+    servicio.registrar.mockReturnValue(of(dolex));
+    const { elemento, rellenar, enviar, establecer } = await renderizar({});
+
+    await rellenar({ ...completo, fechaVencimiento: '12/03/2027' });
+
+    elemento.querySelector<HTMLButtonElement>('mat-datepicker-toggle button')!.click();
+    await establecer();
+
+    // El botón del periodo lo pinta Material en mayúsculas.
+    expect(
+      document
+        .querySelector('.cdk-overlay-container .mat-calendar-period-button')
+        ?.textContent?.trim()
+        .toLowerCase(),
+    ).toBe('marzo 2027');
+
+    await enviar();
+    expect(servicio.registrar).toHaveBeenCalledWith(
+      expect.objectContaining({ fechaVencimiento: '2027-03-12' }),
+    );
+  });
 });

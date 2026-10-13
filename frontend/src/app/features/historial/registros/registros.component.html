@@ -33,6 +33,12 @@
         {{ registro.autor.nombreCompleto }} ({{ registro.autor.idTrabajador }}) ·
         {{ etiquetaRol(registro.autor.rol) }}
       </p>
+
+      <button type="button" class="ver-detalle" (click)="abrir(registro, $event)">
+        <span class="visualmente-oculto">
+          Ver detalle del registro de {{ etiquetasTipo[registro.tipo] }}
+        </span>
+      </button>
     </li>
   }
 </ol>

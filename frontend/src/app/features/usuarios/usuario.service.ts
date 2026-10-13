@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Usuario } from '../../core/auth/auth.models';
-import { UsuarioRequest } from './usuario.models';
+import { CambiarRolRequest, UsuarioRequest } from './usuario.models';
 
 const URL = '/api/usuarios';
 
@@ -19,6 +19,16 @@ export class UsuarioService {
 
   crear(datos: UsuarioRequest): Observable<Usuario> {
     return this.http.post<Usuario>(URL, datos);
+  }
+
+  /**
+   * Cambia el rol y el trabajador vinculado. Los errores del backend: 400 si el
+   * rol y el trabajador no encajan, 404 si el usuario o el trabajador no
+   * existen, 409 si es su propio rol, si el trabajador ya tiene usuario o si se
+   * quitaría el rol ADMIN al último administrador activo.
+   */
+  cambiarRol(id: string, datos: CambiarRolRequest): Observable<Usuario> {
+    return this.http.patch<Usuario>(`${URL}/${encodeURIComponent(id)}/rol`, datos);
   }
 
   /** 409 si es el propio usuario o el último administrador activo. */

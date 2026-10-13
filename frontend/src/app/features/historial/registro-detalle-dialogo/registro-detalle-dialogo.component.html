@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Detalle del registro</h2>
+
+<mat-dialog-content>
+  <dl class="detalle">
+    <dt>Tipo</dt>
+    <dd>
+      <span [class]="'tipo tipo-' + registro.tipo.toLowerCase()">
+        {{ etiquetasTipo[registro.tipo] }}
+      </span>
+    </dd>
+
+    <dt>Fecha</dt>
+    <dd>
+      <time [attr.datetime]="registro.fecha">{{ formatearFechaHora(registro.fecha) }}</time>
+    </dd>
+
+    <dt>Autor</dt>
+    <dd>
+      {{ registro.autor.nombreCompleto }} ({{ registro.autor.idTrabajador }}) ·
+      {{ etiquetaRol(registro.autor.rol) }}
+    </dd>
+
+    <dt>Contenido</dt>
+    <dd class="contenido">{{ registro.contenido }}</dd>
+
+    @if (registro.medicacion; as medicacion) {
+      <dt>Medicamento</dt>
+      <dd>{{ medicacion.idMedicamento }}</dd>
+
+      <dt>Cantidad</dt>
+      <dd>{{ medicacion.cantidad }} {{ medicacion.cantidad === 1 ? 'unidad' : 'unidades' }}</dd>
+    }
+  </dl>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button type="button" mat-dialog-close>Cerrar</button>
+</mat-dialog-actions>

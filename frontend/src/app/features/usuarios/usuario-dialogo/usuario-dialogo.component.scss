@@ -22,9 +22,9 @@
 }
 
 // Con subscriptSizing="dynamic" el subscript crece con el texto; este margen
-// garantiza un hueco mínimo de 4px entre el subscript y el campo siguiente.
+// garantiza un hueco mínimo de 8px entre el subscript y el campo siguiente.
 mat-form-field {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 // Cada campo conserva su altura natural: el hint largo de "Contraseña" no debe

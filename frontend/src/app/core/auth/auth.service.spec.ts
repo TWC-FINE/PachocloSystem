@@ -173,6 +173,31 @@ describe('AuthService', () => {
     expect(auth.usuario()).toEqual(ADMIN);
   });
 
+  it('recupera una sesión guardada sin nombreCompleto: la app sigue funcionando', () => {
+    // Sesión de una versión anterior: el usuario guardado no traía el campo.
+    sessionStorage.setItem(
+      CLAVE,
+      JSON.stringify({
+        token: 'guardado',
+        expiraEn: Date.now() + 60_000,
+        usuario: {
+          idUsuario: 'USR-0002',
+          username: 'eva',
+          rol: 'DOCTOR',
+          idTrabajador: 'DOC-0001',
+          activo: true,
+          debeCambiarPassword: false,
+        },
+      }),
+    );
+
+    const auth = crear();
+
+    expect(auth.autenticado()).toBe(true);
+    expect(auth.usuario()?.idTrabajador).toBe('DOC-0001');
+    expect(auth.usuario()?.nombreCompleto).toBeUndefined();
+  });
+
   it.each([
     ['expirada', JSON.stringify({ token: 't', expiraEn: Date.parse('2026-10-06T09:59:59Z') })],
     ['corrupta', '{no es json'],

@@ -96,10 +96,22 @@
     <div class="fila-campos">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Fecha de vencimiento</mat-label>
-        <input matInput [matDatepicker]="vencimiento" formControlName="fechaVencimiento" required />
+        <input
+          matInput
+          appFechaDdMmAaaa
+          [matDatepicker]="vencimiento"
+          formControlName="fechaVencimiento"
+          required
+        />
         <mat-datepicker-toggle matIconSuffix [for]="vencimiento" />
         <mat-datepicker #vencimiento />
-        <mat-error>{{ primerError(formulario.controls.fechaVencimiento) }}</mat-error>
+        <mat-error>
+          @if (formulario.controls.fechaVencimiento.hasError('matDatepickerParse')) {
+            La fecha no es válida (use dd/mm/aaaa).
+          } @else {
+            {{ primerError(formulario.controls.fechaVencimiento) }}
+          }
+        </mat-error>
       </mat-form-field>
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Ubicación</mat-label>

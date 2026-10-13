@@ -55,7 +55,7 @@ public class AuthController {
         // El nombre de la autenticación es el username validado y activo que
         // fija JwtUsuarioAuthenticationConverter al releer el repositorio.
         Usuario usuario = usuarioService.buscarPorUsername(autenticacion.getName());
-        return UsuarioResponse.from(usuario);
+        return UsuarioResponse.from(usuario, usuarioService.nombreDelTrabajador(usuario));
     }
 
     /**

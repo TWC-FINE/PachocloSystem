@@ -437,7 +437,7 @@ registro) están en `HistorialClinicoService`.
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/api/auth/login` | Público. `{ "username", "password" }` → JWT bearer |
-| GET | `/api/auth/me` | Autenticado. Devuelve `{ idUsuario, username, rol, idTrabajador, activo, debeCambiarPassword }` |
+| GET | `/api/auth/me` | Autenticado. Devuelve `{ idUsuario, username, rol, idTrabajador, nombreCompleto, activo, debeCambiarPassword }` (`nombreCompleto` es `null` para el ADMIN o si su trabajador ya no existe) |
 | POST | `/api/auth/password` | Autenticado. Cambia la contraseña del propio usuario: `{ "passwordActual", "passwordNueva" }` → `204`. El token usado queda revocado de inmediato y hay que volver a iniciar sesión. |
 
 Login correcto:
@@ -495,8 +495,9 @@ curl http://localhost:8080/api/pacientes -H "Authorization: Bearer eyJhbGciOiJIU
 | PATCH | `/api/usuarios/{id}/activar` | Reactiva (idempotente) | 200 / 404 / 409 |
 | PATCH | `/api/usuarios/{id}/password` | Restablece la contraseña `{password}`; deja el cambio obligatorio | 204 / 400 / 404 |
 
-Las respuestas son `{ idUsuario, username, rol, idTrabajador, activo, debeCambiarPassword }`
-y **nunca incluyen el hash** de la contraseña ni la versión del token. Un
+Las respuestas son `{ idUsuario, username, rol, idTrabajador, nombreCompleto, activo, debeCambiarPassword }`
+(`nombreCompleto` es `null` para el ADMIN o si su trabajador ya no existe) y
+**nunca incluyen el hash** de la contraseña ni la versión del token. Un
 usuario que no es ADMIN recibe `403` y una petición sin token, `401`, ambos
 con el cuerpo de error uniforme.
 
@@ -516,9 +517,9 @@ curl -X POST http://localhost:8080/api/usuarios   -H "Authorization: Bearer <tok
   entonces, el resto de la API le responde `403` (ver
   [Permisos por rol](#permisos-por-rol)).
 - **Cambio de rol:** mismas reglas de vínculo que el alta; libera el trabajador
-  anterior. `409` si el trabajador nuevo ya tiene usuario o si se quitaría el
-  rol ADMIN al último administrador activo. Se aplica en la siguiente petición
-  (los permisos se releen siempre).
+  anterior. `409` si el solicitante se cambia su propio rol, si el trabajador
+  nuevo ya tiene usuario o si se quitaría el rol ADMIN al último administrador
+  activo. Se aplica en la siguiente petición (los permisos se releen siempre).
 - **Desactivar:** el usuario pierde el acceso de inmediato y sus tokens quedan
   revocados. `409` si un admin intenta desactivarse a sí mismo o desactivar al
   último administrador activo. Eliminar un trabajador sigue desactivando su

@@ -39,6 +39,7 @@ describe('HistorialPacienteComponent', () => {
     username: 'eva',
     rol: 'DOCTOR',
     idTrabajador: 'DOC-0001',
+    nombreCompleto: 'Eva Mora',
     activo: true,
     debeCambiarPassword: false,
   };
@@ -113,10 +114,29 @@ describe('HistorialPacienteComponent', () => {
 
     expect(dialogo.open).toHaveBeenCalledWith(
       RegistroDialogoComponent,
-      expect.objectContaining({ data: { paciente: ana, autor: 'DOC-0001' } }),
+      expect.objectContaining({
+        data: { paciente: ana, autor: { idTrabajador: 'DOC-0001', nombreCompleto: 'Eva Mora' } },
+      }),
     );
     expect(notificaciones.exito).toHaveBeenCalledWith('Registro añadido al historial.');
     expect(historial.listarDePaciente).toHaveBeenCalledTimes(2);
+  });
+
+  it('si la sesión no trae nombre, pasa el autor solo con su ID y deja crear igual', async () => {
+    usuario.set({ ...doctora, nombreCompleto: null });
+    dialogo.open.mockReturnValue({ afterClosed: () => of(registro) });
+    const { fixture, botonNuevo } = await renderizar();
+
+    botonNuevo()!.click();
+    await fixture.whenStable();
+
+    expect(dialogo.open).toHaveBeenCalledWith(
+      RegistroDialogoComponent,
+      expect.objectContaining({
+        data: { paciente: ana, autor: { idTrabajador: 'DOC-0001', nombreCompleto: null } },
+      }),
+    );
+    expect(notificaciones.exito).toHaveBeenCalledWith('Registro añadido al historial.');
   });
 
   it('al cancelar tras un resultado incierto recarga la lista, sin aviso de éxito', async () => {

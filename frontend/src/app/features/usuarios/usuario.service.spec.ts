@@ -41,6 +41,23 @@ describe('UsuarioService', () => {
     peticion.flush({});
   });
 
+  it('cambia el rol con PATCH', () => {
+    servicio.cambiarRol('USR-0002', { rol: 'ENFERMERO', idTrabajador: 'ENF-0001' }).subscribe();
+
+    const conTrabajador = http.expectOne('/api/usuarios/USR-0002/rol');
+    expect(conTrabajador.request.method).toBe('PATCH');
+    expect(conTrabajador.request.body).toEqual({ rol: 'ENFERMERO', idTrabajador: 'ENF-0001' });
+    conTrabajador.flush({});
+
+    // A ADMIN se le manda `idTrabajador: null`, como en el alta.
+    servicio.cambiarRol('USR-0002', { rol: 'ADMIN', idTrabajador: null }).subscribe();
+
+    const admin = http.expectOne('/api/usuarios/USR-0002/rol');
+    expect(admin.request.method).toBe('PATCH');
+    expect(admin.request.body).toEqual({ rol: 'ADMIN', idTrabajador: null });
+    admin.flush({});
+  });
+
   it.each([
     ['desactivar', '/api/usuarios/USR-0002/desactivar'],
     ['activar', '/api/usuarios/USR-0002/activar'],

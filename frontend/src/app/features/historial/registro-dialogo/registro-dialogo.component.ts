@@ -41,10 +41,20 @@ import {
 } from '../historial.models';
 import { HistorialService } from '../historial.service';
 
+/** Trabajador con el que se firmará el registro nuevo. */
+export interface AutorNuevoRegistro {
+  idTrabajador: string;
+  /**
+   * Nombre del trabajador, si se conoce. Opcional y `null` para que una sesión
+   * guardada antes de que el backend enviara el nombre no rompa nada.
+   */
+  nombreCompleto?: string | null;
+}
+
 export interface DatosRegistroDialogo {
   paciente: Paciente;
   /** Trabajador del usuario actual, solo para mostrarlo: el backend firma con él. */
-  autor: string;
+  autor: AutorNuevoRegistro;
 }
 
 /** Se canceló tras un resultado incierto: el registro pudo crearse, conviene recargar la lista. */
@@ -146,6 +156,18 @@ export class RegistroDialogoComponent {
     inject<MatDialogRef<RegistroDialogoComponent, ResultadoRegistroDialogo>>(MatDialogRef);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly datos = inject<DatosRegistroDialogo>(MAT_DIALOG_DATA);
+
+  /**
+   * Autor tal y como se muestra: «Eva Mora (DOC-0001)» o solo el ID si el
+   * nombre falta (`null`, vacío o ausente, p. ej. una sesión guardada antes de
+   * que el backend lo enviara). Nunca «null», «undefined» ni unos paréntesis
+   * vacíos.
+   */
+  protected readonly autor = computed(() => {
+    const { idTrabajador, nombreCompleto } = this.datos.autor;
+    const nombre = nombreCompleto?.trim();
+    return nombre ? `${nombre} (${idTrabajador})` : idTrabajador;
+  });
 
   protected readonly formulario = this.fb.group({
     tipo: this.fb.control<TipoRegistro | null>(

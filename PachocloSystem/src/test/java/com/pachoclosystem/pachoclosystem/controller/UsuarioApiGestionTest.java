@@ -270,31 +270,46 @@ class UsuarioApiGestionTest extends MockMvcBaseTest {
     }
 
     @Test
-    void elAdminNoPuedeDesactivarseASiMismoPorLaApiYElUltimoAdminEsIntocable() throws Exception {
+    void elAdminNoPuedeDesactivarseNiCambiarseElRolASiMismo() throws Exception {
         String idAdmin = repositorioUsuarios.buscarPorUsername("admin").getIdUsuario();
 
         perform(patch("/api/usuarios/{id}/desactivar", idAdmin))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.mensajes[0]").value("No puede desactivar su propio usuario."));
 
-        // Para probar el invariante del último ADMIN, se neutralizan el resto de
-        // administradores activos que puedan haber dejado otros tests en el
-        // repositorio compartido (fontanería directa al modelo, no por la API).
-        repositorioUsuarios.listarTodos().stream()
-                .filter(u -> u.getRol() == Rol.ADMIN && u.isActivo() && !u.getIdUsuario().equals(idAdmin))
-                .forEach(Usuario::desactivar);
-
-        // Degradar al único admin activo también se rechaza.
+        // El cambio de rol sobre uno mismo también se rechaza. La guarda del
+        // último administrador activo es inalcanzable por la API (quien pide es un
+        // ADMIN activo, así que el único activo sería él mismo y salta antes la
+        // regla del propio rol): se cubre en UsuarioServiceGestionTest.
         String doctor = registrarDoctor("Carlos Mena", "Cardiologia");
         perform(patch("/api/usuarios/{id}/rol", idAdmin)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"rol\":\"DOCTOR\",\"idTrabajador\":\"" + doctor + "\"}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensajes[0]")
-                        .value("No se puede quitar el rol ADMIN al último administrador activo."));
+                .andExpect(jsonPath("$.mensajes[0]").value("No puede cambiar su propio rol."));
 
         // Sigue intacto y operativo.
+        assertThat(repositorioUsuarios.buscarPorId(idAdmin).getRol()).isEqualTo(Rol.ADMIN);
         perform(get("/api/usuarios")).andExpect(status().isOk());
+    }
+
+    @Test
+    void elAdminNoPuedeCambiarSuPropioRolAunqueHayaOtrosAdministradores() throws Exception {
+        // Segundo ADMIN activo: lo que rechaza es la regla del propio rol, no la
+        // del último administrador activo.
+        Usuario segundo = usuarioService.crearUsuario("admin.dos" + sufijo(),
+                "password-segunda-10", Rol.ADMIN, null);
+        String doctor = registrarDoctor("Carlos Mena", "Cardiologia");
+
+        performConToken(tokenService.generarToken(segundo),
+                patch("/api/usuarios/{id}/rol", segundo.getIdUsuario())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rol\":\"DOCTOR\",\"idTrabajador\":\"" + doctor + "\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensajes[0]").value("No puede cambiar su propio rol."));
+
+        assertThat(repositorioUsuarios.buscarPorId(segundo.getIdUsuario()).getRol())
+                .isEqualTo(Rol.ADMIN);
     }
 
     @Test

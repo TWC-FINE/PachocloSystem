@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -151,6 +152,23 @@ class AuthControllerTest extends MockMvcBaseTest {
                 .doesNotContain("passwordHash")
                 .doesNotContain("getPasswordHash")
                 .doesNotContain("$2a$10$");
+    }
+
+    @Test
+    void meDevuelveElNombreCompletoDelTrabajadorVinculadoYNullSinVinculo() throws Exception {
+        String idDoctor = registrarDoctor("Ana Gil", "Cardiologia");
+        String tokenDoctor = tokenDeTrabajador(Rol.DOCTOR, idDoctor);
+
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + tokenDoctor))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idTrabajador").value(idDoctor))
+                .andExpect(jsonPath("$.nombreCompleto").value("Ana Gil"));
+
+        // El administrador no está vinculado a ningún trabajador: null, no inventado.
+        mockMvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + tokenAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idTrabajador", nullValue()))
+                .andExpect(jsonPath("$.nombreCompleto", nullValue()));
     }
 
     @Test

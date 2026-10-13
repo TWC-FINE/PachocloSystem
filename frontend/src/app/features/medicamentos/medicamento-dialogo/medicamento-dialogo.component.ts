@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { mensajesDeError } from '../../../core/http/api-error';
 import { ErroresFormularioComponent } from '../../../shared/errores-formulario/errores-formulario.component';
 import { PROVEEDORES_FECHA_ISO } from '../../../shared/fecha-adapter';
+import { FechaMascaraDirectiva } from '../../../shared/fecha-mascara.directive';
 import {
   enteroEntre,
   longitudMaxima,
@@ -51,6 +52,7 @@ function texto(obligatorioMensaje: string, maximo: number, maximoMensaje: string
     MatSelectModule,
     MatButtonModule,
     MatDatepickerModule,
+    FechaMascaraDirectiva,
     ErroresFormularioComponent,
   ],
   // Fechas del calendario como texto ISO en español (ver shared/fecha-adapter.ts).
