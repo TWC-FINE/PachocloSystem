@@ -108,7 +108,7 @@ marcadas como obligatorias hacen fallar el compose con un mensaje claro si falta
 | **4. Volúmenes** | Bloque `volumes:` y su uso en 3 servicios (ver abajo). |
 | **5. Puertos** | `ports:` solo en `frontend` (ver abajo). |
 | **6. Redes** | Bloque `networks:` con `publica` e `interna` (ver abajo). |
-| 7. Publicación en Docker Hub y GitHub | Los nombres de imagen ya llevan `${DOCKERHUB_USER}`; falta `docker login` y `docker push` (ver abajo). |
+| 7. Publicación en Docker Hub y GitHub | Imágenes en `twcfine/pachoclo-*` ([`docker-compose.hub.yml`](../docker-compose.hub.yml)) y código en GitHub; ver la sección [Publicación](#publicación). |
 
 ### Servicios
 
@@ -201,17 +201,61 @@ networks:
 `medicamentos-service` y las bases solo en `interna`. Así el frontend no puede alcanzar las bases
 ni el microservicio.
 
-### Publicar en Docker Hub
+## Publicación
 
-Los nombres de imagen son `${DOCKERHUB_USER}/pachoclo-frontend`, `pachoclo-api` y `pachoclo-medicamentos` (etiqueta `${IMAGE_TAG}`).
-Con `DOCKERHUB_USER` definido en `.env`:
+Las 3 imágenes propias están publicadas (públicas) en Docker Hub con los tags `1.0` y `latest`.
+Las bases usan la imagen oficial `postgres:18`, que no se republica.
+
+| Imagen | Docker Hub | Digest de `1.0` y `latest` |
+|---|---|---|
+| `twcfine/pachoclo-frontend` | <https://hub.docker.com/r/twcfine/pachoclo-frontend> | `sha256:efd8ca32533b9a6d0a7de6ee95482c817bc0b7f482e90d5500de9dee21d8c53f` |
+| `twcfine/pachoclo-api` | <https://hub.docker.com/r/twcfine/pachoclo-api> | `sha256:5a66b1e378ac2ba113802ab2a0f9c79fc0d12459e01aad61f6d4914ce7b3a63c` |
+| `twcfine/pachoclo-medicamentos` | <https://hub.docker.com/r/twcfine/pachoclo-medicamentos> | `sha256:494e202b2b017f915b07aa481bb2b2187e34ef3c956bc21d91fd26154a09f541` |
+
+Perfil: <https://hub.docker.com/u/twcfine>. Código: <https://github.com/TWC-FINE/PachocloSystem>.
+
+### Comandos usados
+
+Con la sesión de Docker Hub ya abierta (Docker Desktop guarda la credencial; no se escribió ninguna
+contraseña ni token). Para abrirla en otra máquina: `docker login` y escribir las credenciales en el
+aviso interactivo.
 
 ```bash
-docker login
-docker compose build
-# Solo las 3 imágenes propias (las bases usan la imagen oficial de PostgreSQL):
-docker compose push frontend pachoclo-api medicamentos-service
+# 1. Construir con el tag de versión (DOCKERHUB_USER e IMAGE_TAG dan el nombre de cada imagen)
+DOCKERHUB_USER=twcfine IMAGE_TAG=1.0 docker compose build
+
+# 2. Añadir el tag "latest" a la misma imagen
+for i in api medicamentos frontend; do
+  docker tag twcfine/pachoclo-$i:1.0 twcfine/pachoclo-$i:latest
+done
+
+# 3. Publicar los dos tags de cada imagen
+for i in api medicamentos frontend; do
+  docker push twcfine/pachoclo-$i:1.0
+  docker push twcfine/pachoclo-$i:latest
+done
 ```
+
+Antes de publicar se comprobó que las imágenes no contienen `.env`, claves privadas ni secretos
+(solo el bundle de certificados raíz de Alpine), y después, sin autenticación, que los 3
+repositorios son públicos (`is_private: false`).
+
+### Ejecutarlo solo con Docker Hub
+
+[`docker-compose.hub.yml`](../docker-compose.hub.yml) es igual que `docker-compose.yml` salvo que
+las 3 imágenes propias se **descargan** (`image:`) en vez de construirse (`build:`). Solo hacen falta
+ese archivo y un `.env` copiado de `.env.example`; no hace falta el código fuente.
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d      # luego: http://localhost:4200
+docker compose -f docker-compose.hub.yml down       # (con -v también borra los datos)
+```
+
+Se probó en una carpeta con solo esos dos archivos y sin imágenes locales de `twcfine/*`: el `pull`
+las descargó, los 5 servicios quedaron `healthy`, el login del admin respondió 200 y los digests de
+las imágenes en ejecución coincidían con los publicados.
 
 ## Seguridad aplicada
 
