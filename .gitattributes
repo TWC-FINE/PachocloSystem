@@ -1,0 +1,11 @@
+# Archivos que se ejecutan o se leen dentro de contenedores Linux: siempre LF.
+# Con core.autocrlf=true (Windows) el checkout los dejaría en CRLF y un script,
+# un entrypoint o un nginx.conf con "\r" rompe el contenedor.
+Dockerfile*    text eol=lf
+.dockerignore  text eol=lf
+*.conf         text eol=lf
+*.sh           text eol=lf
+*.yml          text eol=lf
+*.env.example  text eol=lf
+.env.example   text eol=lf
+.gitattributes text eol=lf

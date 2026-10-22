@@ -1,0 +1,16 @@
+# Fuera del contexto de build: artefactos locales, secretos y control de versiones.
+target/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+*.iml
+.env
+.env.*
+*.pem
+*.key
+*.log
+README.md
+Dockerfile
+.dockerignore
