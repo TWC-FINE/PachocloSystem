@@ -12,7 +12,7 @@ services:
   # ---------- Frontend: SPA Angular servida por nginx ----------
   frontend:
     build: ./frontend
-    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-frontend:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclo-frontend:${IMAGE_TAG:-latest}
     ports:
       # Único puerto publicado al host.
       - "${FRONTEND_PORT:-4200}:8080"
@@ -34,7 +34,7 @@ services:
   # ---------- API principal: JWT, roles, pacientes, trabajadores, historial ----------
   pachoclo-api:
     build: ./PachocloSystem
-    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-api:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclo-api:${IMAGE_TAG:-latest}
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET en .env}
@@ -73,7 +73,7 @@ services:
   # ---------- Microservicio de inventario: solo accesible desde la red interna ----------
   medicamentos-service:
     build: ./MedicamentosService
-    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-medicamentos:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclo-medicamentos:${IMAGE_TAG:-latest}
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       MEDICAMENTOS_API_KEY: ${MEDICAMENTOS_API_KEY:?defina MEDICAMENTOS_API_KEY en .env}

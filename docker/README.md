@@ -203,7 +203,7 @@ ni el microservicio.
 
 ### Publicar en Docker Hub
 
-Los nombres de imagen son `${DOCKERHUB_USER}/pachoclosystem-frontend|api|medicamentos:${IMAGE_TAG}`.
+Los nombres de imagen son `${DOCKERHUB_USER}/pachoclo-frontend`, `pachoclo-api` y `pachoclo-medicamentos` (etiqueta `${IMAGE_TAG}`).
 Con `DOCKERHUB_USER` definido en `.env`:
 
 ```bash
