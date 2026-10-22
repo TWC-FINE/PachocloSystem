@@ -1,0 +1,17 @@
+# Fuera del contexto de build: dependencias y salidas locales (se reconstruyen en la imagen).
+node_modules/
+dist/
+.angular/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.env
+.env.*
+*.log
+# Generado solo para el build de Vercel.
+src/environments/environment.vercel.ts
+README.md
+Dockerfile
+.dockerignore

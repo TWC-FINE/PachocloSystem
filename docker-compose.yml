@@ -1,0 +1,148 @@
+# PachocloSystem en Docker Compose: 5 servicios, 2 redes y 3 volúmenes.
+# La configuración y los secretos salen de .env (copiar de .env.example).
+#
+#   Navegador ─► frontend (nginx) ─► pachoclo-api ─► medicamentos-service
+#                  [publica]            [publica+interna]   [interna]
+#                                          │                    │
+#                                     db-pachoclo         db-medicamentos
+#                                       [interna]           [interna]
+name: pachoclosystem
+
+services:
+  # ---------- Frontend: SPA Angular servida por nginx ----------
+  frontend:
+    build: ./frontend
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-frontend:${IMAGE_TAG:-latest}
+    ports:
+      # Único puerto publicado al host.
+      - "${FRONTEND_PORT:-4200}:8080"
+    networks:
+      publica:
+        # IP fija: es el único proxy de confianza de pachoclo-api (APP_LOGIN_PROXIES_CONFIABLES).
+        ipv4_address: ${NGINX_IP:-172.28.10.10}
+    depends_on:
+      pachoclo-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ---------- API principal: JWT, roles, pacientes, trabajadores, historial ----------
+  pachoclo-api:
+    build: ./PachocloSystem
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-api:${IMAGE_TAG:-latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET en .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD en .env}
+      # Enlace con el microservicio y con su base: se resuelven por nombre de servicio.
+      MEDICAMENTOS_URL: http://medicamentos-service:8081
+      MEDICAMENTOS_API_KEY: ${MEDICAMENTOS_API_KEY:?defina MEDICAMENTOS_API_KEY en .env}
+      PACHOCLOSYSTEM_DB_URL: jdbc:postgresql://db-pachoclo:5432/${PACHOCLO_DB_NAME:-pachoclosystem}
+      PACHOCLOSYSTEM_DB_USER: ${PACHOCLO_DB_USER:-pachoclosystem_app}
+      PACHOCLOSYSTEM_DB_PASSWORD: ${PACHOCLO_DB_PASSWORD:?defina PACHOCLO_DB_PASSWORD en .env}
+      CORS_ORIGENES: ${CORS_ORIGENES:-}
+      # Solo la IP de nginx: de ella se acepta X-Forwarded-For. No debe ser todo el rango de la
+      # red, porque incluiría la puerta de enlace (la IP con la que nginx ve al cliente).
+      APP_LOGIN_PROXIES_CONFIABLES: ${NGINX_IP:-172.28.10.10}
+      # Logs a archivo, además de la consola, en el volumen pachoclo-logs.
+      LOGGING_FILE_NAME: /var/log/pachoclo/pachoclosystem.log
+    volumes:
+      - pachoclo-logs:/var/log/pachoclo
+    networks:
+      publica:
+      interna:
+    depends_on:
+      db-pachoclo:
+        condition: service_healthy
+      medicamentos-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ---------- Microservicio de inventario: solo accesible desde la red interna ----------
+  medicamentos-service:
+    build: ./MedicamentosService
+    image: ${DOCKERHUB_USER:-pachoclo}/pachoclosystem-medicamentos:${IMAGE_TAG:-latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      MEDICAMENTOS_API_KEY: ${MEDICAMENTOS_API_KEY:?defina MEDICAMENTOS_API_KEY en .env}
+      MEDICAMENTOS_DB_URL: jdbc:postgresql://db-medicamentos:5432/${MEDICAMENTOS_DB_NAME:-medicamentos}
+      MEDICAMENTOS_DB_USER: ${MEDICAMENTOS_DB_USER:-medicamentos_app}
+      MEDICAMENTOS_DB_PASSWORD: ${MEDICAMENTOS_DB_PASSWORD:?defina MEDICAMENTOS_DB_PASSWORD en .env}
+    networks:
+      interna:
+    depends_on:
+      db-medicamentos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:8081/actuator/health/readiness"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # ---------- PostgreSQL de PachocloSystem ----------
+  db-pachoclo:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${PACHOCLO_DB_NAME:-pachoclosystem}
+      POSTGRES_USER: ${PACHOCLO_DB_USER:-pachoclosystem_app}
+      POSTGRES_PASSWORD: ${PACHOCLO_DB_PASSWORD:?defina PACHOCLO_DB_PASSWORD en .env}
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker.
+      - pachoclo-datos:/var/lib/postgresql
+    networks:
+      interna:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  # ---------- PostgreSQL de MedicamentosService ----------
+  db-medicamentos:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${MEDICAMENTOS_DB_NAME:-medicamentos}
+      POSTGRES_USER: ${MEDICAMENTOS_DB_USER:-medicamentos_app}
+      POSTGRES_PASSWORD: ${MEDICAMENTOS_DB_PASSWORD:?defina MEDICAMENTOS_DB_PASSWORD en .env}
+    volumes:
+      - medicamentos-datos:/var/lib/postgresql
+    networks:
+      interna:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+networks:
+  # Frontend y API. Subred fija para poder declararla como proxy confiable del login.
+  publica:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.10.0/24
+  # Bases de datos y medicamentos-service. "internal" = sin salida a internet ni al host.
+  interna:
+    driver: bridge
+    internal: true
+
+volumes:
+  pachoclo-datos:
+  medicamentos-datos:
+  pachoclo-logs:

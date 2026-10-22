@@ -7,3 +7,6 @@
 
 # Logs
 *.log
+
+# Plantilla de variables de Docker Compose: sí se versiona (sin secretos reales).
+!.env.example
