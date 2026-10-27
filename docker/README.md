@@ -208,9 +208,9 @@ Las bases usan la imagen oficial `postgres:18`, que no se republica.
 
 | Imagen | Docker Hub | Digest de `1.0` y `latest` |
 |---|---|---|
-| `twcfine/pachoclo-frontend` | <https://hub.docker.com/r/twcfine/pachoclo-frontend> | `sha256:efd8ca32533b9a6d0a7de6ee95482c817bc0b7f482e90d5500de9dee21d8c53f` |
-| `twcfine/pachoclo-api` | <https://hub.docker.com/r/twcfine/pachoclo-api> | `sha256:5a66b1e378ac2ba113802ab2a0f9c79fc0d12459e01aad61f6d4914ce7b3a63c` |
-| `twcfine/pachoclo-medicamentos` | <https://hub.docker.com/r/twcfine/pachoclo-medicamentos> | `sha256:494e202b2b017f915b07aa481bb2b2187e34ef3c956bc21d91fd26154a09f541` |
+| `twcfine/pachoclo-frontend` | <https://hub.docker.com/r/twcfine/pachoclo-frontend> | `sha256:d280c52d85ae7c66e3bc581a8859f00962e0ed0e9341507f42a5b0598713d3ea` |
+| `twcfine/pachoclo-api` | <https://hub.docker.com/r/twcfine/pachoclo-api> | `sha256:50e3e9daf2f34636516869081ce49185776442cd5bbee4f242d92e91fe69f971` |
+| `twcfine/pachoclo-medicamentos` | <https://hub.docker.com/r/twcfine/pachoclo-medicamentos> | `sha256:cefb2a11dcf34001b714d8b6c7f51431d7ec6a342994f88aa4deb370cada38aa` |
 
 Perfil: <https://hub.docker.com/u/twcfine>. Código: <https://github.com/TWC-FINE/PachocloSystem>.
 
